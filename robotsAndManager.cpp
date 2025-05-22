@@ -1,5 +1,15 @@
-#include "robots.h"
-#include "simulationData.h"
+#include <string>
+#include "robotsAndManager.h"
+
+void GenericRobot::setPosition(Position newPosition)
+{
+    position = newPosition;
+}
+
+Position GenericRobot::getPosition() const
+{
+    return position;
+}
 
 void GenericRobot::move(int direction)
 {
@@ -40,8 +50,24 @@ void GenericRobot::move(int direction)
     if (position.y < 0)
         position.y = 0;
     
-    if (position.x > mapSize.x)
-        position.x = mapSize.x;
-    if (position.y > mapSize.y)
-        position.y = mapSize.y;
+    if (position.x > simulationManager.mapSize.x)
+        position.x = simulationManager.mapSize.x;
+    if (position.y > simulationManager.mapSize.y)
+        position.y = simulationManager.mapSize.y;
 }
+
+GenericRobot::~GenericRobot()
+{
+}
+
+string GenericRobot::getType()
+{
+    return "GenericRobot";
+}
+
+string MovingRobot::getType()
+{
+    return "MovingRobot";
+}
+
+SimulationManager simulationManager;
