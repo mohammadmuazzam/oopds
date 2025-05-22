@@ -4,4 +4,5 @@ robots: 5
 GenericRobot Kidd 3 6
 GenericRobot Alpha 35 20
 GenericRobot Beta 20 37
-GenericRobot Star random random
+GenericRobot Star     random random
+MovingRobot Hitam random 10
