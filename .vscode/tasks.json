@@ -9,6 +9,7 @@
                 "-g",
                 "${file}",
                 "robotsAndManager.cpp",
+                "funcs.cpp",
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe"
             ],
