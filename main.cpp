@@ -5,32 +5,53 @@
 #include <fstream>
 
 #include "robotsAndManager.h"
+#include "funcs.h"
 
 using namespace std;
 
 void ReadFromFile(const string& filename);
 void HandleRegexPattern(const string& line, int lineNumber);
-int getRandomNumber(int min, int max);
-Position getRandomPosition(int min, int max);
+void PrintMap();
+void DefineRobot(smatch matches);
+void RandomAction(GenericRobot* robot);
 
-//! UNDEFINED REFERENCE TO ALL OF THEM
+string emptySpace = "*";
+
 
 int main()
 {
     string filename = "input.txt";
     ReadFromFile(filename);
 
-    cout << "Map Size: " << simulationManager.mapSize.x << " by " << simulationManager.mapSize.y << endl;
-    cout << "Simulation Steps: " << simulationManager.simulationSteps << endl;
-    cout << "Number of Robots: " << simulationManager.numRobots << endl;
-    cout << "Robots:" << endl;
+    for (int i = 0; i < simulationManager.simulationSteps; i++)
+    {
+        PrintMap();
+
+        if (simulationManager.robots.size() == 1)
+        {
+            cout << "One robot left. Ending simulation" << endl;
+            break;
+        }
+
+        for (const auto& robot : simulationManager.robots)
+        {
+            RandomAction(robot.get());
+        }
+    }
+    
+    cout << "Final map:" << endl;
+    PrintMap();
     for (const auto& robot : simulationManager.robots)
     {
-        cout << "Robot Name: " << robot->name << ", Type: " << robot->getType() << endl;
-        cout << "Position: (" << robot->getPosition().x << ", " << robot->getPosition().y << ")" << endl;
+        if (robot->getPosition() == Position(-1, -1))
+        {
+            cout << robot->name << " is dead" << endl;
+        }
+        else
+        {
+            cout << robot->name << " is at (" << robot->getPosition().x << ", " << robot->getPosition().y << ")" << endl;
+        }   
     }
-
-    cout << "Robot 0:" << simulationManager.robots[0]->name << endl;
 
 }
 
@@ -100,29 +121,10 @@ void HandleRegexPattern(const string& line, int lineNumber)
             }
             break;
         default:
+            //* remaining lines must be robot data
             if (regex_search(line, matches, patternRobotData))
             {
-                string robotType = matches[1];
-                string robotName = matches[2];
-                Position robotPosition;
-                robotPosition.x = (matches[3] == "random") ? getRandomNumber(0, simulationManager.mapSize.x) : stoi(matches[3]);
-                robotPosition.y = (matches[4] == "random") ? getRandomNumber(0, simulationManager.mapSize.y) : stoi(matches[4]);
-
-                GenericRobot* robot;
-                
-                if (robotType == "MovingRobot")
-                {
-                    robot = new MovingRobot();
-                }
-                else
-                {
-                    robot = new GenericRobot();
-                }
-
-                robot->name = robotName;
-                robot->setPosition(robotPosition);
-
-                simulationManager.robots.push_back(unique_ptr<GenericRobot>(robot));
+                DefineRobot(matches);
             }
             else
             {
@@ -131,17 +133,94 @@ void HandleRegexPattern(const string& line, int lineNumber)
             
             break;
     }
-
-
 }
 
-Position getRandomPosition(int min, int max) {
-    Position pos;
-    pos.x = rand() % (max - min + 1) + min;
-    pos.y = rand() % (max - min + 1) + min;
-    return pos;
+void PrintMap()
+{
+    for (int i = 0; i < simulationManager.mapSize.x; i++)
+    {
+        cout << "--";
+    }
+    cout << endl;
+    for (int i = 0; i < simulationManager.mapSize.x; i++)
+    {
+        for (int j = 0; j < simulationManager.mapSize.y; j++)
+        {
+            bool occupied = false;
+            for (const auto& robot : simulationManager.robots)
+            {
+                //* print first letter of robot name
+                if (robot->getPosition().x == i && robot->getPosition().y == j)
+                {
+                    cout << robot->name[0] << " "; 
+                    occupied = true;
+                    break;
+                }
+            }
+            if (!occupied)
+            {
+                //* empty space
+                cout << emptySpace <<  " ";
+            }
+        }
+        cout << endl;
+    }
+
+    for (int i = 0; i < simulationManager.mapSize.x; i++)
+    {
+        cout << "--";
+    }
+    cout << endl;
+    
 }
 
-int getRandomNumber(int min, int max) {
-    return rand() % (max - min + 1) + min;
+void DefineRobot(smatch matches)
+{
+    string robotType = matches[1];
+    string robotName = matches[2];
+    Position robotPosition;
+    robotPosition.x = (matches[3] == "random") ? GetRandomNumber(0, simulationManager.mapSize.x) : stoi(matches[3]);
+    robotPosition.y = (matches[4] == "random") ? GetRandomNumber(0, simulationManager.mapSize.y) : stoi(matches[4]);
+    
+    //* check if the position is valid
+    while (!IsPositionValid(robotPosition, simulationManager.mapSize))
+    {
+        robotPosition = GetRandomPosition(simulationManager.mapSize);
+    }
+
+    GenericRobot* robot;
+    //* define robot type
+    if (robotType == "MovingRobot")
+    {
+        robot = new MovingRobot();
+    }
+    else
+    {
+        robot = new GenericRobot();
+    }
+
+    robot->name = robotName;
+    robot->setPosition(robotPosition);
+
+    simulationManager.robots.push_back(unique_ptr<GenericRobot>(robot));
+
+    return;
+}
+
+void RandomAction(GenericRobot* robot)
+{
+    int action = GetRandomNumber(0, 2);
+    cout << "(" << robot->getPosition().x << ", " << robot->getPosition().y << ") ";
+    switch (action)
+    {
+        case 0: //* move
+            robot->move(GetRandomNumber(0, 7));
+            break;
+        case 1: //* look
+            robot->look(GetRandomNumber(0, 7));
+            break;
+        case 2: //* shoot
+            robot->shoot(robot->enemyPosition);
+            break;
+    }
 }
