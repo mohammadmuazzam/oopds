@@ -41,36 +41,31 @@ void GenericRobot::setPosition(Position newPosition)
     position = newPosition;
 }
 
-Position GenericRobot::getPosition() const
+Position GenericRobot::getPosition() const  
 {
     return position;
 }
 
-void GenericRobot::move(int direction)
+void GenericRobot::move(Position movePosition)
 {
-    Position finalPosition = position;
-    finalPosition = GetNeighborPosition(finalPosition, direction);
-
-    cout << getType() << "-" << name << " moving to (" << finalPosition.x << ", " << finalPosition.y << ")" << endl;
+    Position newPosition = position + movePosition;
 
     //* check if out of bounds
-    if (0 <= finalPosition.x && finalPosition.x < simulationManager.mapSize.x)
+    if (0 <= newPosition.x && newPosition.x < simulationManager.mapSize.x)
     {
-        position.x = finalPosition.x;
+        position.x = newPosition.x;
     }
-    if (0 <= finalPosition.y && finalPosition.y < simulationManager.mapSize.y)
+    if (0 <= newPosition.y && newPosition.y < simulationManager.mapSize.y)
     {
-        position.y = finalPosition.y;
+        position.y = newPosition.y;
     }
 }
 
-void GenericRobot::look(int direction)
+void GenericRobot::look(Position lookPosition)
 {
-    Position lookPosition = GetNeighborPosition(position, direction);
-
     cout << getType() << "-" << name << " looking at (" << lookPosition.x << ", " << lookPosition.y << ")" << endl;
 
-    if (simulationManager.isPositionOccupied(lookPosition))
+    if (simulationManager.isPositionOccupied(position + lookPosition))
     {
         enemyPosition = lookPosition;
     }
@@ -98,10 +93,10 @@ void GenericRobot::die()
 void GenericRobot::spawn()
 {
     //* spawn robot at a random position
-    Position spawnPosition = GetRandomPosition(simulationManager.mapSize);
+    Position spawnPosition = GetRandomPosition(simulationManager.mapSize - 1);
     while (simulationManager.isPositionOccupied(spawnPosition))
     {
-        spawnPosition = GetRandomPosition(simulationManager.mapSize);
+        spawnPosition = GetRandomPosition(simulationManager.mapSize - 1);
     }
     setPosition(spawnPosition);
 }
@@ -156,31 +151,40 @@ GenericRobot::~GenericRobot()
 #pragma endregion
 
 #pragma region MovingRobot
-
-void MovingRobot::move(int direction)
+//* default move
+void MovingRobot::move(Position movePosition)
 {
-    Position finalPosition = position;
-    finalPosition = GetNeighborPosition(finalPosition, direction);
-
-    cout << getType() << "-" << name << " moving to (" << finalPosition.x << ", " << finalPosition.y << ")" << endl;
-
     //* check if out of bounds
-    if (0 <= finalPosition.x && finalPosition.x < simulationManager.mapSize.x)
+    if (0 <= movePosition.x && movePosition.x < simulationManager.mapSize.x)
     {
-        position.x = finalPosition.x;
+        position.x += movePosition.x;
     }
-    if (0 <= finalPosition.y && finalPosition.y < simulationManager.mapSize.y)
+    if (0 <= movePosition.y && movePosition.y < simulationManager.mapSize.y)
     {
-        position.y = finalPosition.y;
+        position.y += movePosition.y;
     }
 }
 
 #pragma region MovingRobot
 
-
 string MovingRobot::getType()
 {
     return "MovingRobot";
+}
+
+void MovingRobot::move(Position movePosition)
+{
+    cout << getType() << "-" << name << " moving to (" << movePosition.x << ", " << movePosition.y << ")" << endl;
+
+    //* check if out of bounds
+    if (0 <= movePosition.x && movePosition.x < simulationManager.mapSize.x)
+    {
+        position.x = movePosition.x;
+    }
+    if (0 <= movePosition.y && movePosition.y < simulationManager.mapSize.y)
+    {
+        position.y = movePosition.y;
+    }
 }
 
 SimulationManager simulationManager;

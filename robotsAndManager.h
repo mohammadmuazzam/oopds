@@ -26,6 +26,32 @@ class Position
         {
             return !(*this == other);
         }
+        //* position addition
+        Position operator+ (const Position& other) const
+        {
+            return Position(x + other.x, y + other.y);
+        }
+        //* position addition with int
+        Position operator+ (const int value) const
+        {
+            return Position(x + value, y + value);
+        }
+
+        Position operator- (const Position& other) const
+        {
+            return Position(x - other.x, y - other.y);
+        }
+        //* position subtraction with int
+        Position operator- (const int value) const
+        {
+            return Position(x - value, y - value);
+        }
+
+        void operator+= (const Position& other)
+        {
+            x += other.x;
+            y += other.y;
+        }
 };
 
 class GenericRobot
@@ -41,13 +67,8 @@ class GenericRobot
 
         void upgrade(UpgradeRobot* upgrade);
 
-        //* only one in 8 neighboring directions
-        //* we use 0-7 to represent the 8 directions
-        //* 0 1 2
-        //* 3   4
-        //* 5 6 7
-        virtual void look(int direction);
-        virtual void move(int direction);
+        virtual void look(Position lookPosition);
+        virtual void move(Position movePosition);
         virtual void shoot(Position enemyPosition);
         virtual void die();
         void spawn();
@@ -66,7 +87,8 @@ class MovingRobot : public GenericRobot
 {
     public:
         string getType() override;
-        void move(int direction) override;
+        //* MovingRobot can move at most 2 steps in any direction
+        void move(Position movePosition) override;
 };
 
 class SimulationManager
@@ -87,7 +109,8 @@ class SimulationManager
 
 class UpgradeRobot
 {
-
+    public:
+        virtual string getUpgradeType() = 0;
 };
 
 extern SimulationManager simulationManager;

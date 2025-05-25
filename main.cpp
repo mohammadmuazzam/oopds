@@ -15,6 +15,10 @@ void PrintMap();
 void DefineRobot(smatch matches);
 void RandomAction(GenericRobot* robot);
 
+void MoveRobot(GenericRobot* robot);
+void LookRobot(GenericRobot* robot);
+void ShootRobot(GenericRobot* robot);
+
 string emptySpace = "*";
 
 
@@ -190,6 +194,7 @@ void DefineRobot(smatch matches)
 
     GenericRobot* robot;
     //* define robot type
+    //* if it is generic robot, then give random type
     if (robotType == "MovingRobot")
     {
         robot = new MovingRobot();
@@ -213,14 +218,41 @@ void RandomAction(GenericRobot* robot)
     cout << "(" << robot->getPosition().x << ", " << robot->getPosition().y << ") ";
     switch (action)
     {
-        case 0: //* move
-            robot->move(GetRandomNumber(0, 7));
+        case 0: //* default move
+            robot->move(GetRandomPositionCustom(Position(-1, 1), Position(-1, 1)));
+            //#MoveRobot(robot);
+
             break;
-        case 1: //* look
-            robot->look(GetRandomNumber(0, 7));
+        case 1: //* default look
+            robot->look(GetRandomPositionCustom(Position(-1, 1), Position(-1, 1)));
+            //#LookRobot(robot);
             break;
         case 2: //* shoot
             robot->shoot(robot->enemyPosition);
+            //#ShootRobot(robot);
             break;
     }
+}
+
+//* Handle random actions for robots action
+void MoveRobot(GenericRobot* robot)
+{
+
+}
+
+void LookRobot(GenericRobot* robot)
+{
+
+}
+
+void ShootRobot(GenericRobot* robot)
+{
+
+}
+
+void ThinkRobot(GenericRobot* robot)
+{
+    //* Handle thinking logic for robots
+    // This function can be used to implement more complex behavior for robots
+    // For now, it is left empty as a placeholder
 }
