@@ -58,6 +58,7 @@ class GenericRobot
 {
     protected:
         Position position;
+        string type;
         int numBullets;
         int health;
     public:
@@ -75,20 +76,18 @@ class GenericRobot
 
         void setPosition(Position newPosition);
         Position getPosition() const;
-        virtual string getType();
+        string getType();
 
         void setNumBullets(int bullets);
 
         GenericRobot();
         virtual ~GenericRobot();
 };
-
+//* MovingRobot can move at most 2 steps in any direction
 class MovingRobot : public GenericRobot
 {
     public:
-        string getType() override;
-        //* MovingRobot can move at most 2 steps in any direction
-        void move(Position movePosition) override;
+        MovingRobot();
 };
 
 class SimulationManager

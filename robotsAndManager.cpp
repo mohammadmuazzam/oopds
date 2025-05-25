@@ -103,6 +103,8 @@ void GenericRobot::spawn()
 
 void GenericRobot::shoot(Position enemyPosition)
 {
+    //! if enemyPosition is (-1, -1), it means that the robot did not see any enemy
+    //! so robot will shoot at a random position
     
     //* if robot saw enemy
     if (enemyPosition != Position(-1, -1))
@@ -135,7 +137,7 @@ void GenericRobot::shoot(Position enemyPosition)
 
 string GenericRobot::getType()
 {
-    return "GenericRobot";
+    return type;
 }
 
 GenericRobot::GenericRobot()
@@ -151,40 +153,15 @@ GenericRobot::~GenericRobot()
 #pragma endregion
 
 #pragma region MovingRobot
-//* default move
-void MovingRobot::move(Position movePosition)
+
+MovingRobot::MovingRobot()
 {
-    //* check if out of bounds
-    if (0 <= movePosition.x && movePosition.x < simulationManager.mapSize.x)
-    {
-        position.x += movePosition.x;
-    }
-    if (0 <= movePosition.y && movePosition.y < simulationManager.mapSize.y)
-    {
-        position.y += movePosition.y;
-    }
+    numBullets = 10;
+    type = "MovingRobot";
 }
 
-#pragma region MovingRobot
+#pragma endregion 
 
-string MovingRobot::getType()
-{
-    return "MovingRobot";
-}
 
-void MovingRobot::move(Position movePosition)
-{
-    cout << getType() << "-" << name << " moving to (" << movePosition.x << ", " << movePosition.y << ")" << endl;
-
-    //* check if out of bounds
-    if (0 <= movePosition.x && movePosition.x < simulationManager.mapSize.x)
-    {
-        position.x = movePosition.x;
-    }
-    if (0 <= movePosition.y && movePosition.y < simulationManager.mapSize.y)
-    {
-        position.y = movePosition.y;
-    }
-}
 
 SimulationManager simulationManager;

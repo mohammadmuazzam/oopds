@@ -17,10 +17,25 @@ Position GetRandomPosition(Position limit) {
     return pos;
 }
 
-Position GetRandomPositionCustom(Position xLimit, Position yLimit) {
+Position GetRandomPositionCustom(Position xLimit, Position yLimit, bool ignoreZero) {
     Position pos;
-    pos.x = GetRandomNumber(xLimit.x, xLimit.y);
-    pos.y = GetRandomNumber(yLimit.x, yLimit.y);
+    if (ignoreZero)
+    {
+        while (pos.x == 0)
+        {
+            pos.x = GetRandomNumber(xLimit.x, xLimit.y);
+        }
+        while (pos.y == 0)
+        {
+            pos.y = GetRandomNumber(yLimit.x, yLimit.y);
+        }
+    }
+    else
+    {
+        pos.x = GetRandomNumber(xLimit.x, xLimit.y);
+        pos.y = GetRandomNumber(yLimit.x, yLimit.y);
+    }
+    
     return pos;
 }
 

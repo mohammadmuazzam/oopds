@@ -6,7 +6,8 @@ bool ProbabilityCheck(int probability);
 
 Position GetRandomPosition(Position mapSize);
 
-Position GetRandomPositionCustom(Position xLimit, Position yLimit);
+//* by default it ignores
+Position GetRandomPositionCustom(Position xLimit, Position yLimit, bool ignoreZero = true);
 
 bool IsPositionValid(const Position& pos, const Position& mapSize);
 
