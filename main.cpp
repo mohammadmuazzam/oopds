@@ -95,7 +95,7 @@ void HandleRegexPattern(const string& line, int lineNumber)
             }
             else
             {
-                cerr << "Error: Invalid map size format." << endl;
+                cerr << "Error: Invalid map size format >> " << line << endl;
             }
             break;
         case 1: //* second line must be number of steps
@@ -105,7 +105,7 @@ void HandleRegexPattern(const string& line, int lineNumber)
             }
             else
             {
-                cerr << "Error: Invalid simulation steps format." << endl;
+                cerr << "Error: Invalid simulation steps format >> " << line << endl;
             }
             break;
         case 2: //* third line must be number of robots
@@ -115,7 +115,7 @@ void HandleRegexPattern(const string& line, int lineNumber)
             }
             else
             {
-                cerr << "Error: Invalid number of robots format." << endl;
+                cerr << "Error: Invalid number of robots format >> " << line << endl;
             }
             break;
         default:
