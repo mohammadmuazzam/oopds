@@ -10,10 +10,29 @@ int GetRandomNumber(int min, int max) {
     return rand() % (max - min + 1) + min;
 }
 
-Position GetRandomPosition(Position mapSize) {
+Position GetRandomPosition(Position limit) {
     Position pos;
-    pos.x = GetRandomNumber(0, mapSize.x - 1);
-    pos.y = GetRandomNumber(0, mapSize.y - 1);
+    pos.x = GetRandomNumber(0, limit.x);
+    pos.y = GetRandomNumber(0, limit.y);
+    return pos;
+}
+
+Position GetRandomPositionCustom(Position xLimit, Position yLimit, bool ignoreZero) {
+    Position pos;
+    if (ignoreZero)
+    {
+        while (pos.x == 0 && pos.y == 0)
+        {
+            pos.x = GetRandomNumber(xLimit.x, xLimit.y);
+            pos.y = GetRandomNumber(yLimit.x, yLimit.y);
+        }
+    }
+    else
+    {
+        pos.x = GetRandomNumber(xLimit.x, xLimit.y);
+        pos.y = GetRandomNumber(yLimit.x, yLimit.y);
+    }
+    
     return pos;
 }
 

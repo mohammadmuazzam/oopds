@@ -36,62 +36,58 @@ GenericRobot* SimulationManager::getRobotAtPosition(Position pos)
 }
 #pragma endregion
 #pragma region GenericRobot
+
+bool GenericRobot::isDead()
+{
+    return health <= 0;
+}
+
 void GenericRobot::setPosition(Position newPosition)
 {
     position = newPosition;
 }
 
-Position GenericRobot::getPosition() const
+Position GenericRobot::getPosition() const  
 {
     return position;
 }
 
-void GenericRobot::move(int direction)
+void GenericRobot::move(Position movePosition)
 {
-    Position finalPosition = position;
-    finalPosition = GetNeighborPosition(finalPosition, direction);
+    Position newPosition = position + movePosition;
 
-    cout << getType() << "-" << name << " moving to (" << finalPosition.x << ", " << finalPosition.y << ")" << endl;
-
+    if (simulationManager.isPositionOccupied(newPosition))
+    {
+        cout << "\t(" << newPosition.x << ", " << newPosition.y << ") is occupied. Cannot move there." << endl;
+        return;
+    }
+    
     //* check if out of bounds
-    if (0 <= finalPosition.x && finalPosition.x < simulationManager.mapSize.x)
+    if (0 <= newPosition.x && newPosition.x < simulationManager.mapSize.x)
     {
-        position.x = finalPosition.x;
+        position.x = newPosition.x;
     }
-    if (0 <= finalPosition.y && finalPosition.y < simulationManager.mapSize.y)
+    if (0 <= newPosition.y && newPosition.y < simulationManager.mapSize.y)
     {
-        position.y = finalPosition.y;
+        position.y = newPosition.y;
     }
+
+
+
+    cout << "moved to (" << position.x << ", " << position.y << ")" << endl;
+
 }
 
-void GenericRobot::look(int direction)
+void GenericRobot::look(Position lookPosition)
 {
-    Position lookPosition = GetNeighborPosition(position, direction);
-
-    cout << getType() << "-" << name << " looking at (" << lookPosition.x << ", " << lookPosition.y << ")" << endl;
-
-    if (simulationManager.isPositionOccupied(lookPosition))
+    cout << "looked at (" << lookPosition.x << ", " << lookPosition.y << ")" << endl;
+    if (simulationManager.isPositionOccupied(position + lookPosition))
     {
         enemyPosition = lookPosition;
     }
     else
     {
         enemyPosition = Position(-1, -1);
-    }
-}
-
-void GenericRobot::die()
-{
-    cout << getType() << "-" << name << " died" << endl;
-    health--;
-    upgrades.clear();
-    numBullets = 10;
-
-    //* remove robot from simulation manager
-    if (health <= 0)
-    {
-        simulationManager.robots.erase(remove_if(simulationManager.robots.begin(), simulationManager.robots.end(),
-            [&](const unique_ptr<GenericRobot>& robot) { return robot.get() == this; }), simulationManager.robots.end());
     }
 }
 
@@ -106,47 +102,84 @@ void GenericRobot::spawn()
     setPosition(spawnPosition);
 }
 
-void GenericRobot::shoot(Position enemyPosition)
+void GenericRobot::die()
 {
-    
-    //* if robot saw enemy
-    if (enemyPosition != Position(-1, -1))
-    {
-        cout << getType() << "-" << name << " shooting at (" << enemyPosition.x << ", " << enemyPosition.y << ")" << endl;
-        //* check if enemy exists at the position
-        if (simulationManager.getRobotAtPosition(enemyPosition) != nullptr)
-        {
-            GenericRobot* enemyRobot = simulationManager.getRobotAtPosition(enemyPosition);
-            if (ProbabilityCheck(70))
-            {
-                cout << getType() << "-" << name << " hit enemy robot " << enemyRobot->name << endl;
-                enemyRobot->die();
+    health--;
+    upgrades.clear();
+    numBullets = 10;
 
-                if (enemyRobot->health > 0)
-                {
-                    cout << "spawning enemy robot " << enemyRobot->name << endl;
-                    enemyRobot->spawn();
-                }
-                    
-            }
-            return;
+    cout << "\t## Robot " << name << " died (health = " << health << ") ## " << endl;
+
+    //* remove robot from simulation manager
+    if (health <= 0)
+    {
+        cout << "\tRobot " << name << " has died and will be removed from the simulation." << endl;
+        simulationManager.robots.erase(remove_if(simulationManager.robots.begin(), simulationManager.robots.end(),
+            [&](const unique_ptr<GenericRobot>& robot) { return robot.get() == this; }), simulationManager.robots.end());
+        
+        cout << "\tRemaining robots:" << endl;
+        for (const auto& robot : simulationManager.robots)
+        {
+            cout << "\t\t" << robot->name << endl;
         }
     }
     else
     {
-        cout << getType() << "-" << name << " shooting at empty space (" << enemyPosition.x << ", " << enemyPosition.y << ")" << endl;
+        spawn();
+        cout << "\t\t Respawning at (" << position.x << ", " << position.y << ")" << endl;
+    }
+}
+
+void GenericRobot::shoot(Position enemyPosition)
+{
+    //* shoot at shoot position
+    Position shootPosition;
+    
+    if (enemyPosition != Position(-1, -1))
+        shootPosition = enemyPosition;
+    else
+        shootPosition = GetRandomPositionCustom(Position(-1, 1), Position(-1, 1)) + position;
+    
+    
+    if (simulationManager.getRobotAtPosition(shootPosition) != nullptr)
+    {
+        GenericRobot* enemyRobot = simulationManager.getRobotAtPosition(shootPosition);
+        cout << "TARGET ACQUIRED: " << enemyRobot->name << endl;
+        if (ProbabilityCheck(70))
+        {
+            cout << "HIT " << enemyRobot->getType() << ", " << enemyRobot->name  << endl;
+            enemyRobot->die();
+        }
+        else
+        {
+            cout << "MISS " << enemyRobot->getType() << ", " << enemyRobot->name << endl;
+        }
+    }
+    else
+    {
+        cout << "NO ROBOT (" << shootPosition.x << ", " << shootPosition.y << ")" << endl;
+    }
+
+    numBullets--;
+
+    // check if out of bullets
+    if (numBullets <= 0)
+    {
+        cout << getType() << "-" << name << " ran out of bullets" << endl;
+        die();
     }
 }
 
 string GenericRobot::getType()
 {
-    return "GenericRobot";
+    return type;
 }
 
 GenericRobot::GenericRobot()
 {
     numBullets = 10;
     health = 3;
+    type = "GenericRobot";
 }
 
 GenericRobot::~GenericRobot()
@@ -157,30 +190,13 @@ GenericRobot::~GenericRobot()
 
 #pragma region MovingRobot
 
-void MovingRobot::move(int direction)
+MovingRobot::MovingRobot()
 {
-    Position finalPosition = position;
-    finalPosition = GetNeighborPosition(finalPosition, direction);
-
-    cout << getType() << "-" << name << " moving to (" << finalPosition.x << ", " << finalPosition.y << ")" << endl;
-
-    //* check if out of bounds
-    if (0 <= finalPosition.x && finalPosition.x < simulationManager.mapSize.x)
-    {
-        position.x = finalPosition.x;
-    }
-    if (0 <= finalPosition.y && finalPosition.y < simulationManager.mapSize.y)
-    {
-        position.y = finalPosition.y;
-    }
+    type = "MovingRobot";
 }
 
-#pragma region MovingRobot
+#pragma endregion 
 
 
-string MovingRobot::getType()
-{
-    return "MovingRobot";
-}
 
 SimulationManager simulationManager;

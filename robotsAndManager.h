@@ -26,12 +26,39 @@ class Position
         {
             return !(*this == other);
         }
+        //* position addition
+        Position operator+ (const Position& other) const
+        {
+            return Position(x + other.x, y + other.y);
+        }
+        //* position addition with int
+        Position operator+ (const int value) const
+        {
+            return Position(x + value, y + value);
+        }
+
+        Position operator- (const Position& other) const
+        {
+            return Position(x - other.x, y - other.y);
+        }
+        //* position subtraction with int
+        Position operator- (const int value) const
+        {
+            return Position(x - value, y - value);
+        }
+
+        void operator+= (const Position& other)
+        {
+            x += other.x;
+            y += other.y;
+        }
 };
 
 class GenericRobot
 {
     protected:
         Position position;
+        string type;
         int numBullets;
         int health;
     public:
@@ -41,32 +68,27 @@ class GenericRobot
 
         void upgrade(UpgradeRobot* upgrade);
 
-        //* only one in 8 neighboring directions
-        //* we use 0-7 to represent the 8 directions
-        //* 0 1 2
-        //* 3   4
-        //* 5 6 7
-        virtual void look(int direction);
-        virtual void move(int direction);
+        virtual void look(Position lookPosition);
+        virtual void move(Position movePosition);
         virtual void shoot(Position enemyPosition);
         virtual void die();
         void spawn();
 
         void setPosition(Position newPosition);
         Position getPosition() const;
-        virtual string getType();
+        string getType();
+        bool isDead();
 
         void setNumBullets(int bullets);
 
         GenericRobot();
         virtual ~GenericRobot();
 };
-
+//* MovingRobot can move at most 2 steps in any direction
 class MovingRobot : public GenericRobot
 {
     public:
-        string getType() override;
-        void move(int direction) override;
+        MovingRobot();
 };
 
 class SimulationManager
@@ -87,7 +109,8 @@ class SimulationManager
 
 class UpgradeRobot
 {
-
+    public:
+        virtual string getUpgradeType() = 0;
 };
 
 extern SimulationManager simulationManager;
