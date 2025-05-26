@@ -21,12 +21,9 @@ Position GetRandomPositionCustom(Position xLimit, Position yLimit, bool ignoreZe
     Position pos;
     if (ignoreZero)
     {
-        while (pos.x == 0)
+        while (pos.x == 0 && pos.y == 0)
         {
             pos.x = GetRandomNumber(xLimit.x, xLimit.y);
-        }
-        while (pos.y == 0)
-        {
             pos.y = GetRandomNumber(yLimit.x, yLimit.y);
         }
     }

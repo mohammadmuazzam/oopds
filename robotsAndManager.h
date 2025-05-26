@@ -77,6 +77,7 @@ class GenericRobot
         void setPosition(Position newPosition);
         Position getPosition() const;
         string getType();
+        bool isDead();
 
         void setNumBullets(int bullets);
 

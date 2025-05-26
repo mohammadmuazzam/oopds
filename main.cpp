@@ -14,6 +14,7 @@ void HandleRegexPattern(const string& line, int lineNumber);
 void PrintMap();
 void DefineRobot(smatch matches);
 void RandomAction(GenericRobot* robot);
+void Simulation();
 
 void MoveRobot(GenericRobot* robot);
 void LookRobot(GenericRobot* robot);
@@ -26,22 +27,15 @@ int main()
 {
     string filename = "input.txt";
     ReadFromFile(filename);
-
-    for (int i = 0; i < simulationManager.simulationSteps; i++)
+    //* initial print
+    for (const auto& robot : simulationManager.robots)
     {
-        PrintMap();
-
-        if (simulationManager.robots.size() == 1)
-        {
-            cout << "One robot left. Ending simulation" << endl;
-            break;
-        }
-
-        for (const auto& robot : simulationManager.robots)
-        {
-            RandomAction(robot.get());
-        }
+        cout << "Robot: " << robot->name << ", Type: " << robot->getType() 
+             << ", Position: (" << robot->getPosition().x << ", " << robot->getPosition().y << ")" << endl;
     }
+
+    //* simulation
+    Simulation();
     
     cout << "Final map:" << endl;
     PrintMap();
@@ -132,10 +126,39 @@ void HandleRegexPattern(const string& line, int lineNumber)
             }
             else
             {
-                cerr << "Error: Invalid robot data format." << endl;
+                cerr << "Error: Invalid robot data format >> " << line << endl;
             }
             
             break;
+    }
+}
+
+void Simulation()
+{
+    for (int i = 0; i < simulationManager.simulationSteps; i++)
+    {
+        PrintMap();
+
+        if (simulationManager.robots.size() == 1)
+        {
+            cout << "One robot left. Ending simulation" << endl;
+            return;
+        }
+
+        for (size_t i = 0; i < simulationManager.robots.size(); ++i) 
+        {
+            auto& robot = simulationManager.robots[i];
+            cout << "\nStep " << i + 1 << ": " << robot->name << " (" << robot->getType() << ")" << endl;
+
+            if (robot->isDead()) 
+            {
+                simulationManager.robots.erase(simulationManager.robots.begin() + i);
+                i--;
+            } else 
+            {
+                RandomAction(robot.get());
+            }
+        }
     }
 }
 
@@ -215,19 +238,23 @@ void DefineRobot(smatch matches)
 void RandomAction(GenericRobot* robot)
 {
     int action = GetRandomNumber(0, 2);
-    cout << "(" << robot->getPosition().x << ", " << robot->getPosition().y << ") ";
+    cout << "(" << robot->getPosition().x << ", " << robot->getPosition().y << "), " << robot->name << " - ";
     switch (action)
     {
         case 0: //* default move
+            cout << "MOVE" << endl << "\t";
             robot->move(GetRandomPositionCustom(Position(-1, 1), Position(-1, 1)));
             //#MoveRobot(robot);
 
             break;
         case 1: //* default look
+            cout << "LOOK" << endl << "\t";
             robot->look(GetRandomPositionCustom(Position(-1, 1), Position(-1, 1)));
+            
             //#LookRobot(robot);
             break;
         case 2: //* shoot
+            cout << "SHOOT" << endl << "\t";
             robot->shoot(robot->enemyPosition);
             //#ShootRobot(robot);
             break;
