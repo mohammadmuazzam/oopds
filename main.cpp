@@ -137,6 +137,7 @@ void Simulation()
 {
     for (int i = 0; i < simulationManager.simulationSteps; i++)
     {
+        cout << "\nStep " << i + 1 << endl;
         PrintMap();
 
         if (simulationManager.robots.size() == 1)
@@ -148,7 +149,7 @@ void Simulation()
         for (size_t i = 0; i < simulationManager.robots.size(); ++i) 
         {
             auto& robot = simulationManager.robots[i];
-            cout << "\nStep " << i + 1 << ": " << robot->name << " (" << robot->getType() << ")" << endl;
+            
 
             if (robot->isDead()) 
             {
@@ -164,7 +165,7 @@ void Simulation()
 
 void PrintMap()
 {
-    for (int i = 0; i < simulationManager.mapSize.x; i++)
+    for (int i = 0; i <= simulationManager.mapSize.x; i++)
     {
         cout << "--";
     }
@@ -177,7 +178,7 @@ void PrintMap()
             for (const auto& robot : simulationManager.robots)
             {
                 //* print first letter of robot name
-                if (robot->getPosition().x == i && robot->getPosition().y == j)
+                if (robot->getPosition().x-1 == i && robot->getPosition().y-1 == j)
                 {
                     cout << robot->name[0] << " "; 
                     occupied = true;
@@ -210,7 +211,7 @@ void DefineRobot(smatch matches)
     robotPosition.y = (matches[4] == "random") ? GetRandomNumber(0, simulationManager.mapSize.y) : stoi(matches[4]);
     
     //* check if the position is valid
-    while (!IsPositionValid(robotPosition, simulationManager.mapSize))
+    while (!IsPositionValidOrOccupied(robotPosition))
     {
         robotPosition = GetRandomPosition(simulationManager.mapSize);
     }
@@ -246,13 +247,13 @@ void RandomAction(GenericRobot* robot)
     {
         case 0: //* default move
             cout << "MOVE" << endl << "\t";
-            robot->move(GetRandomPositionCustom(Position(-1, 1), Position(-1, 1)));
+            robot->move(GetRandomPositionCustom(Position(-robot->getMoveSteps(), robot->getMoveSteps())));
             //#MoveRobot(robot);
 
             break;
         case 1: //* default look
             cout << "LOOK" << endl << "\t";
-            robot->look(GetRandomPositionCustom(Position(-1, 1), Position(-1, 1)));
+            robot->look(GetRandomPositionCustom(Position(-robot->getLookRange(), robot->getLookRange())));
             
             //#LookRobot(robot);
             break;

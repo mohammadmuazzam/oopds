@@ -36,7 +36,26 @@ Position GetRandomPositionCustom(Position xLimit, Position yLimit, bool ignoreZe
     return pos;
 }
 
-bool IsPositionValid(const Position& pos, const Position& mapSize) {
+Position GetRandomPositionCustom(Position limit, bool ignoreZero) {
+    Position pos;
+    if (ignoreZero)
+    {
+        while (pos.x == 0 && pos.y == 0)
+        {
+            pos.x = GetRandomNumber(limit.x, limit.y);
+            pos.y = GetRandomNumber(limit.x, limit.y);
+        }
+    }
+    else
+    {
+        pos.x = GetRandomNumber(0, limit.x);
+        pos.y = GetRandomNumber(0, limit.y);
+    }
+    
+    return pos;
+}
+
+bool IsPositionValidOrOccupied(const Position& pos) {
     for (const auto& robot : simulationManager.robots)
     {
         //* check if the position is occupied by another robot
@@ -45,7 +64,8 @@ bool IsPositionValid(const Position& pos, const Position& mapSize) {
             return false;
         }
     }
-    return (pos.x >= 0 && pos.x < mapSize.x && pos.y >= 0 && pos.y < mapSize.y);
+
+    return (0 <= pos.x && pos.x < simulationManager.mapSize.x && 0 <= pos.y && pos.y < simulationManager.mapSize.y);
 }
 
 Position GetNeighborPosition(Position pos, int direction)

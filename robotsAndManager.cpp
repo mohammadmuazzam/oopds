@@ -9,18 +9,7 @@ using namespace std;
 
 #pragma region SimulationManager
 
-bool SimulationManager::isPositionOccupied(Position pos)
-{
-    for (const auto& robot : robots)
-    {
-        if (robot->getPosition() == pos)
-        {
-            return true;
-        }
-    }
 
-    return false;
-}
 
 GenericRobot* SimulationManager::getRobotAtPosition(Position pos)
 {
@@ -52,24 +41,29 @@ Position GenericRobot::getPosition() const
     return position;
 }
 
+string GenericRobot::getType() const
+{
+    return type;
+}
+
+int GenericRobot::getMoveSteps() const
+{
+    return moveSteps;
+}
+
+int GenericRobot::getLookRange() const
+{
+    return lookRange;
+}
+
 void GenericRobot::move(Position movePosition)
 {
     Position newPosition = position + movePosition;
 
-    if (simulationManager.isPositionOccupied(newPosition))
+    if (IsPositionValidOrOccupied(newPosition))
     {
-        cout << "\t(" << newPosition.x << ", " << newPosition.y << ") is occupied. Cannot move there." << endl;
+        cout << "\t(" << newPosition.x << ", " << newPosition.y << ") is occupied or out of bounds. Cannot move there." << endl;
         return;
-    }
-    
-    //* check if out of bounds
-    if (0 <= newPosition.x && newPosition.x < simulationManager.mapSize.x)
-    {
-        position.x = newPosition.x;
-    }
-    if (0 <= newPosition.y && newPosition.y < simulationManager.mapSize.y)
-    {
-        position.y = newPosition.y;
     }
 
 
@@ -81,7 +75,7 @@ void GenericRobot::move(Position movePosition)
 void GenericRobot::look(Position lookPosition)
 {
     cout << "looked at (" << lookPosition.x << ", " << lookPosition.y << ")" << endl;
-    if (simulationManager.isPositionOccupied(position + lookPosition))
+    if (IsPositionValidOrOccupied(position + lookPosition))
     {
         enemyPosition = lookPosition;
     }
@@ -95,7 +89,7 @@ void GenericRobot::spawn()
 {
     //* spawn robot at a random position
     Position spawnPosition = GetRandomPosition(simulationManager.mapSize);
-    while (simulationManager.isPositionOccupied(spawnPosition))
+    while (IsPositionValidOrOccupied(spawnPosition))
     {
         spawnPosition = GetRandomPosition(simulationManager.mapSize);
     }
@@ -171,15 +165,8 @@ void GenericRobot::shoot(Position enemyPosition)
     }
 }
 
-string GenericRobot::getType()
-{
-    return type;
-}
-
 GenericRobot::GenericRobot()
 {
-    numBullets = 10;
-    health = 3;
     type = "GenericRobot";
 }
 
@@ -194,6 +181,7 @@ GenericRobot::~GenericRobot()
 MovingRobot::MovingRobot()
 {
     type = "MovingRobot";
+    moveSteps = 2; 
 }
 
 #pragma endregion 

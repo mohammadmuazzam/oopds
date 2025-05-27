@@ -59,8 +59,10 @@ class GenericRobot
     protected:
         Position position;
         string type;
-        int numBullets;
-        int health;
+        int numBullets = 10;
+        int health = 3;
+        int moveSteps = 1;
+        int lookRange = 1;
     public:
         string name;
         Position enemyPosition;
@@ -75,11 +77,16 @@ class GenericRobot
         void spawn();
 
         void setPosition(Position newPosition);
+        void setNumBullets(int bullets);
+
         Position getPosition() const;
-        string getType();
+        string getType() const;
+        int getMoveSteps() const;
+        int getLookRange() const;
+
         bool isDead();
 
-        void setNumBullets(int bullets);
+        
 
         GenericRobot();
         virtual ~GenericRobot();
@@ -104,7 +111,7 @@ class SimulationManager
         Position mapSize;
         GenericRobot* getRobotAtPosition(Position pos);
 
-        bool isPositionOccupied(Position pos);
+        //#bool isPositionOccupied(Position pos);
 };
 
 class UpgradeRobot
