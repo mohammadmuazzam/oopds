@@ -149,6 +149,8 @@ void GenericRobot::shoot(Position enemyPosition)
         {
             cout << "MISS " << enemyRobot->getType() << ", " << enemyRobot->name << endl;
         }
+
+        enemyPosition = Position(-1, -1); // reset enemy position after shooting
     }
     else
     {
@@ -220,6 +222,29 @@ LookingRobot::LookingRobot()
     lookRange = 2; 
 }
 
+#pragma endregion
+
+#pragma region ThinkingRobot
+ThinkingRobot::ThinkingRobot()
+{
+    lastEnemyPositions.push_back(enemyPosition);
+}
+
+void ThinkingRobot::think()
+{
+    //* if saw enemy, then shoot at that position
+    if (enemyPosition != Position(-1, -1))
+    {
+        cout << "ThinkingRobot " << name << " is thinking about shooting at (" 
+             << enemyPosition.x << ", " << enemyPosition.y << ")" << endl;
+
+        if (ProbabilityCheck(70))
+        {
+            shoot(enemyPosition);
+            return;
+        } 
+    }
+}
 #pragma endregion
 
 

@@ -115,8 +115,14 @@ class LookingRobot : public GenericRobot
 
 class ThinkingRobot : public GenericRobot
 {
+    protected:
+        vector<Position> lastEnemyPositions;
+        
+        //* if saw enemy, then shoot at that position
+        //* if not, then think about shooting at random position
     public:
         ThinkingRobot();
+        void think();
         
 };
 #pragma endregion
