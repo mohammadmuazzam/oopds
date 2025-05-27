@@ -7,6 +7,7 @@ using namespace std;
 
 class UpgradeRobot;
 
+#pragma region Position
 class Position
 {
     public:
@@ -53,20 +54,23 @@ class Position
             y += other.y;
         }
 };
-
+#pragma endregion
+#pragma region GenericRobot
 class GenericRobot
 {
     protected:
         Position position;
         string type;
-        int numBullets;
-        int health;
+        int numBullets = 10;
+        int health = 3;
+        int moveSteps = 1;
+        int lookRange = 1;
     public:
         string name;
         Position enemyPosition;
         vector<unique_ptr<UpgradeRobot>> upgrades;
 
-        void upgrade(UpgradeRobot* upgrade);
+        void upgradeRandom();
 
         virtual void look(Position lookPosition);
         virtual void move(Position movePosition);
@@ -75,15 +79,19 @@ class GenericRobot
         void spawn();
 
         void setPosition(Position newPosition);
-        Position getPosition() const;
-        string getType();
-        bool isDead();
-
         void setNumBullets(int bullets);
 
-        GenericRobot();
+        Position getPosition() const;
+        string getType() const;
+        int getMoveSteps() const;
+        int getLookRange() const;
+
+        bool isDead();
+
         virtual ~GenericRobot();
 };
+#pragma endregion
+#pragma region Robot Types
 //* MovingRobot can move at most 2 steps in any direction
 class MovingRobot : public GenericRobot
 {
@@ -91,6 +99,35 @@ class MovingRobot : public GenericRobot
         MovingRobot();
 };
 
+class ShootingRobot : public GenericRobot
+{
+    public:
+        ShootingRobot();
+        //#void shoot(Position enemyPosition) override;
+};
+
+class LookingRobot : public GenericRobot
+{
+    public:
+        LookingRobot();
+        //#void look(Position lookPosition) override;
+};
+
+class ThinkingRobot : public GenericRobot
+{
+    protected:
+        vector<Position> lastEnemyPositions;
+        
+        //* if saw enemy, then shoot at that position
+        //* if not, then think about shooting at random position
+    public:
+        ThinkingRobot();
+        void think();
+        
+};
+#pragma endregion
+
+#pragma region SimulationManager
 class SimulationManager
 {
     private:
@@ -104,13 +141,33 @@ class SimulationManager
         Position mapSize;
         GenericRobot* getRobotAtPosition(Position pos);
 
-        bool isPositionOccupied(Position pos);
+        //#bool isPositionOccupied(Position pos);
 };
-
+#pragma endregion
+#pragma region Upgrade Robots
 class UpgradeRobot
 {
     public:
         virtual string getUpgradeType() = 0;
+        virtual void upgradedAbility() = 0;
+        virtual ~UpgradeRobot() = default;
 };
+
+class ScoutRobot : public UpgradeRobot
+{
+    protected:
+        vector<Position> enemyPositions;
+    public:
+        string getUpgradeType() override;
+        void upgradedAbility() override;
+};
+
+class LongShotBot : public UpgradeRobot
+{
+    public:
+        string getUpgradeType() override;
+        void upgradedAbility() override;
+};
+#pragma endregion
 
 extern SimulationManager simulationManager;

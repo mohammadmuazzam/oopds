@@ -52,7 +52,7 @@ int main()
     }
 
 }
-
+#pragma region ReadFromFile
 void ReadFromFile(const string& filename)
 {
     ifstream file(filename);
@@ -74,7 +74,8 @@ void ReadFromFile(const string& filename)
     file.close();
     return;
 }
-
+#pragma endregion
+#pragma region HandleRegexPattern
 void HandleRegexPattern(const string& line, int lineNumber)
 {
     //* Pattern for map size, steps, number of robots, and robot data
@@ -132,11 +133,68 @@ void HandleRegexPattern(const string& line, int lineNumber)
             break;
     }
 }
+#pragma endregion
+#pragma region DefineRobot
+void DefineRobot(smatch matches)
+{
+    string robotType = matches[1];
+    string robotName = matches[2];
+    Position robotPosition;
+    robotPosition.x = (matches[3] == "random") ? GetRandomNumber(0, simulationManager.mapSize.x) : stoi(matches[3]);
+    robotPosition.y = (matches[4] == "random") ? GetRandomNumber(0, simulationManager.mapSize.y) : stoi(matches[4]);
+    
+    //* check if the position is valid
+    while (!IsPositionValidOrOccupied(robotPosition))
+    {
+        robotPosition = GetRandomPosition(simulationManager.mapSize);
+    }
 
+    GenericRobot* robot;
+    //* define robot type
+    //* if it is generic robot, then give random type
+    if (robotType == "MovingRobot")
+    {
+        robot = new MovingRobot();
+    }
+    else if (robotType == "ShootingRobot")
+    {
+        robot = new ShootingRobot();
+    }
+    else if (robotType == "LookingRobot")
+    {
+        robot = new LookingRobot();
+    }
+    else if (robotType == "GenericRobot") //* if it is generic robot, then give random type
+    {
+        int randomType = GetRandomNumber(0, 2);
+        switch (randomType)
+        {
+            case 0:
+                robot = new MovingRobot();
+                break;
+            case 1:
+                robot = new ShootingRobot();
+                break;
+            case 2:
+                robot = new LookingRobot();
+                break;
+        }
+    }
+
+    robot->name = robotName;
+    robot->setPosition(robotPosition);
+
+    simulationManager.robots.push_back(unique_ptr<GenericRobot>(robot));
+
+    return;
+}
+#pragma endregion
+#pragma region Simulation
 void Simulation()
 {
     for (int i = 0; i < simulationManager.simulationSteps; i++)
     {
+        cout << "\nStep " << i + 1 << endl;
         PrintMap();
 
         if (simulationManager.robots.size() == 1)
@@ -148,7 +206,7 @@ void Simulation()
         for (size_t i = 0; i < simulationManager.robots.size(); ++i) 
         {
             auto& robot = simulationManager.robots[i];
-            cout << "\nStep " << i + 1 << ": " << robot->name << " (" << robot->getType() << ")" << endl;
+            
 
             if (robot->isDead()) 
             {
@@ -161,10 +219,11 @@ void Simulation()
         }
     }
 }
-
+#pragma endregion
+#pragma region PrintMap
 void PrintMap()
 {
-    for (int i = 0; i < simulationManager.mapSize.x; i++)
+    for (int i = 0; i <= simulationManager.mapSize.x; i++)
     {
         cout << "--";
     }
@@ -177,7 +236,7 @@ void PrintMap()
             for (const auto& robot : simulationManager.robots)
             {
                 //* print first letter of robot name
-                if (robot->getPosition().x == i && robot->getPosition().y == j)
+                if (robot->getPosition().x-1 == i && robot->getPosition().y-1 == j)
                 {
                     cout << robot->name[0] << " "; 
                     occupied = true;
@@ -200,56 +259,28 @@ void PrintMap()
     cout << endl;
     
 }
+#pragma endregion
 
-void DefineRobot(smatch matches)
-{
-    string robotType = matches[1];
-    string robotName = matches[2];
-    Position robotPosition;
-    robotPosition.x = (matches[3] == "random") ? GetRandomNumber(0, simulationManager.mapSize.x) : stoi(matches[3]);
-    robotPosition.y = (matches[4] == "random") ? GetRandomNumber(0, simulationManager.mapSize.y) : stoi(matches[4]);
-    
-    //* check if the position is valid
-    while (!IsPositionValid(robotPosition, simulationManager.mapSize))
-    {
-        robotPosition = GetRandomPosition(simulationManager.mapSize);
-    }
-
-    GenericRobot* robot;
-    //* define robot type
-    //* if it is generic robot, then give random type
-    if (robotType == "MovingRobot")
-    {
-        robot = new MovingRobot();
-    }
-    else
-    {
-        robot = new GenericRobot();
-    }
-
-    robot->name = robotName;
-    robot->setPosition(robotPosition);
-
-    simulationManager.robots.push_back(unique_ptr<GenericRobot>(robot));
-
-    return;
-}
-
+#pragma region RandomAction
 void RandomAction(GenericRobot* robot)
 {
+    //* check if robot has been upgraded,
+    //* if yes, then random number up to 3
+    
+
     int action = GetRandomNumber(0, 2);
     cout << "(" << robot->getPosition().x << ", " << robot->getPosition().y << "), " << robot->name << " - ";
     switch (action)
     {
         case 0: //* default move
             cout << "MOVE" << endl << "\t";
-            robot->move(GetRandomPositionCustom(Position(-1, 1), Position(-1, 1)));
+            robot->move(GetRandomPositionCustom(Position(-robot->getMoveSteps(), robot->getMoveSteps())));
             //#MoveRobot(robot);
 
             break;
         case 1: //* default look
             cout << "LOOK" << endl << "\t";
-            robot->look(GetRandomPositionCustom(Position(-1, 1), Position(-1, 1)));
+            robot->look(GetRandomPositionCustom(Position(-robot->getLookRange(), robot->getLookRange())));
             
             //#LookRobot(robot);
             break;
@@ -258,8 +289,13 @@ void RandomAction(GenericRobot* robot)
             robot->shoot(robot->enemyPosition);
             //#ShootRobot(robot);
             break;
+        case 3:
+            //* go through upgrades and randomly choose one
+
+            break;
     }
 }
+#pragma endregion
 
 //* Handle random actions for robots action
 void MoveRobot(GenericRobot* robot)
@@ -280,6 +316,6 @@ void ShootRobot(GenericRobot* robot)
 void ThinkRobot(GenericRobot* robot)
 {
     //* Handle thinking logic for robots
-    // This function can be used to implement more complex behavior for robots
-    // For now, it is left empty as a placeholder
+    //* This function can be used to implement more complex behavior for robots
+    //* For now, it is left empty as a placeholder
 }

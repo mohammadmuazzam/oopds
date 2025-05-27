@@ -9,18 +9,7 @@ using namespace std;
 
 #pragma region SimulationManager
 
-bool SimulationManager::isPositionOccupied(Position pos)
-{
-    for (const auto& robot : robots)
-    {
-        if (robot->getPosition() == pos)
-        {
-            return true;
-        }
-    }
 
-    return false;
-}
 
 GenericRobot* SimulationManager::getRobotAtPosition(Position pos)
 {
@@ -52,24 +41,29 @@ Position GenericRobot::getPosition() const
     return position;
 }
 
+string GenericRobot::getType() const
+{
+    return type;
+}
+
+int GenericRobot::getMoveSteps() const
+{
+    return moveSteps;
+}
+
+int GenericRobot::getLookRange() const
+{
+    return lookRange;
+}
+
 void GenericRobot::move(Position movePosition)
 {
     Position newPosition = position + movePosition;
 
-    if (simulationManager.isPositionOccupied(newPosition))
+    if (IsPositionValidOrOccupied(newPosition))
     {
-        cout << "\t(" << newPosition.x << ", " << newPosition.y << ") is occupied. Cannot move there." << endl;
+        cout << "\t(" << newPosition.x << ", " << newPosition.y << ") is occupied or out of bounds. Cannot move there." << endl;
         return;
-    }
-    
-    //* check if out of bounds
-    if (0 <= newPosition.x && newPosition.x < simulationManager.mapSize.x)
-    {
-        position.x = newPosition.x;
-    }
-    if (0 <= newPosition.y && newPosition.y < simulationManager.mapSize.y)
-    {
-        position.y = newPosition.y;
     }
 
 
@@ -81,7 +75,7 @@ void GenericRobot::move(Position movePosition)
 void GenericRobot::look(Position lookPosition)
 {
     cout << "looked at (" << lookPosition.x << ", " << lookPosition.y << ")" << endl;
-    if (simulationManager.isPositionOccupied(position + lookPosition))
+    if (IsPositionValidOrOccupied(position + lookPosition))
     {
         enemyPosition = lookPosition;
     }
@@ -95,7 +89,7 @@ void GenericRobot::spawn()
 {
     //* spawn robot at a random position
     Position spawnPosition = GetRandomPosition(simulationManager.mapSize);
-    while (simulationManager.isPositionOccupied(spawnPosition))
+    while (IsPositionValidOrOccupied(spawnPosition))
     {
         spawnPosition = GetRandomPosition(simulationManager.mapSize);
     }
@@ -149,11 +143,14 @@ void GenericRobot::shoot(Position enemyPosition)
         {
             cout << "HIT " << enemyRobot->getType() << ", " << enemyRobot->name  << endl;
             enemyRobot->die();
+            //* upgrade robot
         }
         else
         {
             cout << "MISS " << enemyRobot->getType() << ", " << enemyRobot->name << endl;
         }
+
+        enemyPosition = Position(-1, -1); // reset enemy position after shooting
     }
     else
     {
@@ -170,17 +167,26 @@ void GenericRobot::shoot(Position enemyPosition)
     }
 }
 
-string GenericRobot::getType()
+void GenericRobot::upgradeRandom()
 {
-    return type;
+    int upgradeArea = GetRandomNumber(0, 2);
+
+    switch (upgradeArea)
+    {
+        case 0: //* upgrade moving
+            //TODO: implement moving upgrade, choose randomly between hidebot or jumpbot
+            break;
+        case 1: //* upgrade looking
+            //TODO: implement looking upgrade, choose randomly between scoutbot or trackbot
+            break;
+        case 2: //* upgrade shooting
+            //TODO: implement shooting upgrade, choose randomly between longshotbot or semiautobot or thirtyshellbot
+            break;
+        default:
+            cout << "No upgrade applied." << endl;
+    }
 }
 
-GenericRobot::GenericRobot()
-{
-    numBullets = 10;
-    health = 3;
-    type = "GenericRobot";
-}
 
 GenericRobot::~GenericRobot()
 {
@@ -193,10 +199,53 @@ GenericRobot::~GenericRobot()
 MovingRobot::MovingRobot()
 {
     type = "MovingRobot";
+    moveSteps = 2; 
 }
 
 #pragma endregion 
 
+#pragma region ShootingRobot
+
+ShootingRobot::ShootingRobot()
+{
+    type = "ShootingRobot";
+    numBullets = 15; 
+};
+
+#pragma endregion
+
+#pragma region LookingRobot
+
+LookingRobot::LookingRobot()
+{
+    type = "LookingRobot";
+    lookRange = 2; 
+}
+
+#pragma endregion
+
+#pragma region ThinkingRobot
+ThinkingRobot::ThinkingRobot()
+{
+    lastEnemyPositions.push_back(enemyPosition);
+}
+
+void ThinkingRobot::think()
+{
+    //* if saw enemy, then shoot at that position
+    if (enemyPosition != Position(-1, -1))
+    {
+        cout << "ThinkingRobot " << name << " is thinking about shooting at (" 
+             << enemyPosition.x << ", " << enemyPosition.y << ")" << endl;
+
+        if (ProbabilityCheck(70))
+        {
+            shoot(enemyPosition);
+            return;
+        } 
+    }
+}
+#pragma endregion
 
 
 SimulationManager simulationManager;
