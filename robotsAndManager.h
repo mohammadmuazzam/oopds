@@ -7,6 +7,7 @@ using namespace std;
 
 class UpgradeRobot;
 
+#pragma region Position
 class Position
 {
     public:
@@ -53,7 +54,8 @@ class Position
             y += other.y;
         }
 };
-
+#pragma endregion
+#pragma region GenericRobot
 class GenericRobot
 {
     protected:
@@ -86,11 +88,10 @@ class GenericRobot
 
         bool isDead();
 
-        
-
-        GenericRobot();
         virtual ~GenericRobot();
 };
+#pragma endregion
+#pragma region Robot Types
 //* MovingRobot can move at most 2 steps in any direction
 class MovingRobot : public GenericRobot
 {
@@ -98,6 +99,29 @@ class MovingRobot : public GenericRobot
         MovingRobot();
 };
 
+class ShootingRobot : public GenericRobot
+{
+    public:
+        ShootingRobot();
+        //#void shoot(Position enemyPosition) override;
+};
+
+class LookingRobot : public GenericRobot
+{
+    public:
+        LookingRobot();
+        //#void look(Position lookPosition) override;
+};
+
+class ThinkingRobot : public GenericRobot
+{
+    public:
+        ThinkingRobot();
+        
+};
+#pragma endregion
+
+#pragma region SimulationManager
 class SimulationManager
 {
     private:
@@ -113,7 +137,8 @@ class SimulationManager
 
         //#bool isPositionOccupied(Position pos);
 };
-
+#pragma endregion
+#pragma region Upgrade Robots
 class UpgradeRobot
 {
     public:
@@ -137,5 +162,6 @@ class LongShotBot : public UpgradeRobot
         string getUpgradeType() override;
         void upgradedAbility() override;
 };
+#pragma endregion
 
 extern SimulationManager simulationManager;

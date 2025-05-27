@@ -165,10 +165,26 @@ void GenericRobot::shoot(Position enemyPosition)
     }
 }
 
-GenericRobot::GenericRobot()
+void GenericRobot::upgradeRandom()
 {
-    type = "GenericRobot";
+    int upgradeArea = GetRandomNumber(0, 2);
+
+    switch (upgradeArea)
+    {
+        case 0: //* upgrade moving
+            //TODO: implement moving upgrade, choose randomly between hidebot or jumpbot
+            break;
+        case 1: //* upgrade looking
+            //TODO: implement looking upgrade, choose randomly between scoutbot or trackbot
+            break;
+        case 2: //* upgrade shooting
+            //TODO: implement shooting upgrade, choose randomly between longshotbot or semiautobot or thirtyshellbot
+            break;
+        default:
+            cout << "No upgrade applied." << endl;
+    }
 }
+
 
 GenericRobot::~GenericRobot()
 {
@@ -186,6 +202,25 @@ MovingRobot::MovingRobot()
 
 #pragma endregion 
 
+#pragma region ShootingRobot
+
+ShootingRobot::ShootingRobot()
+{
+    type = "ShootingRobot";
+    numBullets = 15; 
+};
+
+#pragma endregion
+
+#pragma region LookingRobot
+
+LookingRobot::LookingRobot()
+{
+    type = "LookingRobot";
+    lookRange = 2; 
+}
+
+#pragma endregion
 
 
 SimulationManager simulationManager;
