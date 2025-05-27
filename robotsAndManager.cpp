@@ -149,6 +149,7 @@ void GenericRobot::shoot(Position enemyPosition)
         {
             cout << "HIT " << enemyRobot->getType() << ", " << enemyRobot->name  << endl;
             enemyRobot->die();
+            //* upgrade robot
         }
         else
         {

@@ -66,7 +66,7 @@ class GenericRobot
         Position enemyPosition;
         vector<unique_ptr<UpgradeRobot>> upgrades;
 
-        void upgrade(UpgradeRobot* upgrade);
+        void upgradeRandom();
 
         virtual void look(Position lookPosition);
         virtual void move(Position movePosition);
@@ -111,6 +111,24 @@ class UpgradeRobot
 {
     public:
         virtual string getUpgradeType() = 0;
+        virtual void upgradedAbility() = 0;
+        virtual ~UpgradeRobot() = default;
+};
+
+class ScoutRobot : public UpgradeRobot
+{
+    protected:
+        vector<Position> enemyPositions;
+    public:
+        string getUpgradeType() override;
+        void upgradedAbility() override;
+};
+
+class LongShotBot : public UpgradeRobot
+{
+    public:
+        string getUpgradeType() override;
+        void upgradedAbility() override;
 };
 
 extern SimulationManager simulationManager;

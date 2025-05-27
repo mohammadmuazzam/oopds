@@ -237,6 +237,9 @@ void DefineRobot(smatch matches)
 
 void RandomAction(GenericRobot* robot)
 {
+    //* check if robot has been upgraded,
+    //* if yes, then random number up to 3
+
     int action = GetRandomNumber(0, 2);
     cout << "(" << robot->getPosition().x << ", " << robot->getPosition().y << "), " << robot->name << " - ";
     switch (action)
@@ -257,6 +260,10 @@ void RandomAction(GenericRobot* robot)
             cout << "SHOOT" << endl << "\t";
             robot->shoot(robot->enemyPosition);
             //#ShootRobot(robot);
+            break;
+        case 3:
+            //* go through upgrades and randomly choose one
+
             break;
     }
 }
@@ -280,6 +287,6 @@ void ShootRobot(GenericRobot* robot)
 void ThinkRobot(GenericRobot* robot)
 {
     //* Handle thinking logic for robots
-    // This function can be used to implement more complex behavior for robots
-    // For now, it is left empty as a placeholder
+    //* This function can be used to implement more complex behavior for robots
+    //* For now, it is left empty as a placeholder
 }
