@@ -65,6 +65,7 @@ class GenericRobot
         int health = 3;
         int moveSteps = 1;
         int lookRange = 1;
+        int shootRange = 1;
     public:
         string name;
         Position enemyPosition;
@@ -85,6 +86,8 @@ class GenericRobot
         string getType() const;
         int getMoveSteps() const;
         int getLookRange() const;
+        int getShootRange() const { return shootRange; };
+        int getHealth() const { return health; }
 
         bool isDead();
 
@@ -117,12 +120,15 @@ class ThinkingRobot : public GenericRobot
 {
     protected:
         vector<Position> lastEnemyPositions;
+        int lookCount = 0;
+        int lookLimit = 0;
         
         //* if saw enemy, then shoot at that position
         //* if not, then think about shooting at random position
     public:
         ThinkingRobot();
         void think();
+        void look(Position lookPosition) override;
         
 };
 #pragma endregion
@@ -138,6 +144,7 @@ class SimulationManager
         int numRobots;
 
         vector<unique_ptr<GenericRobot>> robots;
+        vector<string> deadRobots;
         Position mapSize;
         GenericRobot* getRobotAtPosition(Position pos);
 
@@ -155,10 +162,12 @@ class UpgradeRobot
 
 class ScoutRobot : public UpgradeRobot
 {
-    protected:
-        vector<Position> enemyPositions;
     public:
+        bool abilityUsed = false;
+    public:
+        vector<Position> enemyPositions;
         string getUpgradeType() override;
+        //* change abilityUsed after using the ability
         void upgradedAbility() override;
 };
 

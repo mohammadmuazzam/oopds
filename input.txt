@@ -1,8 +1,9 @@
 M by N : 10 10 
-steps: 50
+steps: 500
 robots: 6
 GenericRobot Kidd 0 0
 GenericRobot Alpha 1 0
 GenericRobot Beta 10 6
 GenericRobot Star random random
 MovingRobot Hitam random 7
+ThinkingRobot Pikiq random random
