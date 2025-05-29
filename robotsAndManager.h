@@ -114,3 +114,51 @@ class UpgradeRobot
 };
 
 extern SimulationManager simulationManager;
+
+class ShootingUpgrade : public UpgradeRobot
+{
+public:
+    virtual void shoot(GenericRobot* robot, Position enemyPosition) = 0;
+    virtual ~ShootingUpgrade() = default; // Good practice
+};
+
+class LongShotBot : public GenericRobot
+{
+public:
+    LongShotBot()
+    {
+        name = "LongShotBot";
+        type = "LongShotBot";
+        numBullets = 10;
+        health = 3;
+    }
+    void shoot(Position enemyPosition) override;
+};
+
+class SemiAutoBot : public GenericRobot
+{
+public:
+    SemiAutoBot()
+    {
+        name = "SemiAutoBot";
+        type = "SemiAutoBot";
+        numBullets = 10;
+        health = 3;
+    }
+    void shoot(Position enemyPosition) override;
+};
+
+class ThirtyShotBot : public GenericRobot
+{
+public:
+    ThirtyShotBot()
+    {
+        name = "ThirtyShotBot";
+        type = "ThirtyShotBot";
+        numBullets = 30;
+        health = 3;
+    }
+    void shoot(Position enemyPosition) override;
+};
+
+

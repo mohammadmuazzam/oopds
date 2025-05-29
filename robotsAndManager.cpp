@@ -195,6 +195,141 @@ MovingRobot::MovingRobot()
     type = "MovingRobot";
 }
 
+// all shooting upgrade
+LongShotBot::LongShotBot()
+{
+    type = "LongShotBot";
+}
+
+void LongShotBot::shoot(Position enemyPosition)
+{
+    Position shootPosition;
+    if (enemyPosition != Position(-1, -1))
+        shootPosition = enemyPosition;
+    else
+        shootPosition = GetRandomPositionCustom(Position(-3, 3), Position(-3, 3)) + position;
+
+    GenericRobot* enemy = simulationManager.getRobotAtPosition(shootPosition);
+    if (enemy != nullptr)
+    {
+        cout << "LongShotBot TARGET: " << enemy->name << endl;
+        if (ProbabilityCheck(70))
+        {
+            cout << "LongShotBot HIT " << enemy->getType() << ", " << enemy->name << endl;
+            enemy->die();
+        }
+        else
+        {
+            cout << "LongShotBot MISS " << enemy->getType() << ", " << enemy->name << endl;
+        }
+    }
+    else
+    {
+        cout << "LongShotBot NO ROBOT at (" << shootPosition.x << ", " << shootPosition.y << ")" << endl;
+    }
+
+    numBullets--;
+    if (numBullets <= 0)
+    {
+        cout << type << "-" << name << " ran out of bullets" << endl;
+        die();
+    }
+}
+
+SemiAutoBot::SemiAutoBot()
+{
+    type = "SemiAutoBot";
+}
+
+void SemiAutoBot::shoot(Position enemyPosition)
+{
+    Position shootPosition;
+    if (enemyPosition != Position(-1, -1))
+        shootPosition = enemyPosition;
+    else
+        shootPosition = GetRandomPositionCustom(Position(-1, 1), Position(-1, 1)) + position;
+
+    GenericRobot* enemy = simulationManager.getRobotAtPosition(shootPosition);
+    if (enemy != nullptr)
+    {
+        cout << "SemiAutoBot TARGET: " << enemy->name << endl;
+        bool hitOnce = false;
+        for (int i = 0; i < 3; i++)
+        {
+            if (ProbabilityCheck(70))
+            {
+                cout << "\tShot " << i + 1 << ": HIT" << endl;
+                hitOnce = true;
+            }
+            else
+            {
+                cout << "\tShot " << i + 1 << ": MISS" << endl;
+            }
+        }
+        if (hitOnce)
+        {
+            cout << "SemiAutoBot KILLED " << enemy->getType() << ", " << enemy->name << endl;
+            enemy->die();
+        }
+        else
+        {
+            cout << "SemiAutoBot ALL SHOTS MISSED" << endl;
+        }
+    }
+    else
+    {
+        cout << "SemiAutoBot NO ROBOT at (" << shootPosition.x << ", " << shootPosition.y << ")" << endl;
+    }
+
+    numBullets--;
+    if (numBullets <= 0)
+    {
+        cout << type << "-" << name << " ran out of bullets" << endl;
+        die();
+    }
+}
+
+ThirtyShotBot::ThirtyShotBot()
+{
+    type = "ThirtyShotBot";
+}
+
+void ThirtyShotBot::shoot(Position enemyPosition)
+{
+    Position shootPosition;
+    if (enemyPosition != Position(-1, -1))
+        shootPosition = enemyPosition;
+    else
+        shootPosition = GetRandomPositionCustom(Position(-1, 1), Position(-1, 1)) + position;
+
+    GenericRobot* enemy = simulationManager.getRobotAtPosition(shootPosition);
+    if (enemy != nullptr)
+    {
+        cout << "ThirtyShotBot TARGET: " << enemy->name << endl;
+        if (ProbabilityCheck(70))
+        {
+            cout << "ThirtyShotBot HIT " << enemy->getType() << ", " << enemy->name << endl;
+            enemy->die();
+        }
+        else
+        {
+            cout << "ThirtyShotBot MISS " << enemy->getType() << ", " << enemy->name << endl;
+        }
+    }
+    else
+    {
+        cout << "ThirtyShotBot NO ROBOT at (" << shootPosition.x << ", " << shootPosition.y << ")" << endl;
+    }
+
+    numBullets--;
+    if (numBullets <= 0)
+    {
+        cout << type << "-" << name << " ran out of bullets" << endl;
+        die();
+    }
+}
+
+
 #pragma endregion 
 
 
