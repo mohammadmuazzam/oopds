@@ -56,26 +56,24 @@ int GenericRobot::getLookRange() const
     return lookRange;
 }
 
-void GenericRobot::move(Position movePosition)
+void GenericRobot::move(Position moveDistance)
 {
-    Position newPosition = position + movePosition;
+    Position newPosition = position + moveDistance;
 
-    if (IsPositionValidOrOccupied(newPosition))
+    if (!IsPositionValidAndUnoccupied(newPosition))
     {
         cout << "\t(" << newPosition.x << ", " << newPosition.y << ") is occupied or out of bounds. Cannot move there." << endl;
         return;
     }
 
-
-
-    cout << "moved to (" << position.x << ", " << position.y << ")" << endl;
-
+    position = newPosition;
+    cout << "moved to (" << position.x << ", " << position.y << ")" << endl;    
 }
 
 void GenericRobot::look(Position lookPosition)
 {
-    cout << "looked at (" << lookPosition.x << ", " << lookPosition.y << ")" << endl;
-    if (IsPositionValidOrOccupied(position + lookPosition))
+    cout << "looked at (" << lookPosition.x + position.x << ", " << lookPosition.y + position.y << ")" << endl;
+    if (IsPositionValidAndUnoccupied(position + lookPosition))
     {
         enemyPosition = lookPosition;
     }
@@ -89,8 +87,9 @@ void GenericRobot::spawn()
 {
     //* spawn robot at a random position
     Position spawnPosition = GetRandomPosition(simulationManager.mapSize);
-    while (IsPositionValidOrOccupied(spawnPosition))
+    while (!IsPositionValidAndUnoccupied(spawnPosition))
     {
+        cout << "\t\tPosition (" << spawnPosition.x << ", " << spawnPosition.y << ") is occupied or out of bounds. Respawning." << endl;
         spawnPosition = GetRandomPosition(simulationManager.mapSize);
     }
     setPosition(spawnPosition);
@@ -108,6 +107,7 @@ void GenericRobot::die()
     if (health <= 0)
     {
         cout << "\tRobot " << name << " has died and will be removed from the simulation." << endl;
+        simulationManager.deadRobots.push_back(name);
         simulationManager.robots.erase(remove_if(simulationManager.robots.begin(), simulationManager.robots.end(),
             [&](const unique_ptr<GenericRobot>& robot) { return robot.get() == this; }), simulationManager.robots.end());
         
@@ -227,22 +227,111 @@ LookingRobot::LookingRobot()
 #pragma region ThinkingRobot
 ThinkingRobot::ThinkingRobot()
 {
+    type = "ThinkingRobot";
     lastEnemyPositions.push_back(enemyPosition);
 }
 
 void ThinkingRobot::think()
 {
+    if (lookLimit == 0)
+    {
+        lookLimit = GetRandomNumber(2, 5);
+        return;
+    }
+
+    //* if no data about enemy positions, then look around
+    if (lastEnemyPositions.empty() && lookCount <= lookLimit)
+    {
+        cout << "\t... No known enemy positions. Looking around." << endl;
+        look(GetRandomPositionCustom(Position(-lookRange, lookRange)));
+        if (lastEnemyPositions.empty())
+        {
+            cout << "\t... No enemy found in sight." << endl;
+        }
+        else
+        {
+            cout << "\t... Found enemy positions: ";
+            for (const auto& pos : lastEnemyPositions)
+            {
+                cout << "(" << pos.x << ", " << pos.y << ") ";
+            }
+            cout << endl;
+        }
+        return;
+    }
+
+    //* if lookCount exceeds a random number and still no data about enemy, then move randomly
+    if (lookCount > lookLimit && lastEnemyPositions.empty())
+    {
+        lookCount = 0; // reset look count
+        lookLimit = 0; // reset look limit1
+        cout << "\tLook count exceeded and no enemy in sight. Moving randomly.\n\t" << endl;
+        move(GetRandomPositionCustom(Position(-moveSteps, moveSteps)));
+        return;
+    }
+
+    //* if last enemy position isn't in shooting range, then move towards closest known enemy position
+    if (!lastEnemyPositions.empty())
+    {
+        Position closestEnemyPosition = GetClosestPosition(lastEnemyPositions);
+        if (GetShootDistance(position, closestEnemyPosition) > shootRange)
+        {
+            Position movePosition = closestEnemyPosition - position;
+            if (movePosition.x > moveSteps) movePosition.x = moveSteps;
+            if (movePosition.y > moveSteps) movePosition.y = moveSteps;
+
+            move(movePosition);
+            return;
+        }
+        else
+        {
+            cout << "SHOOT" << endl;
+            shoot(closestEnemyPosition);
+            //* remove the closest enemy position from the list
+            lastEnemyPositions.erase(remove(lastEnemyPositions.begin(), lastEnemyPositions.end(), closestEnemyPosition), lastEnemyPositions.end());
+            return;
+        }
+    }
+
+
+
     //* if saw enemy, then shoot at that position
+    
+
+    //* 
+}
+
+void ThinkingRobot::look(Position lookPosition)
+{
+    cout << "looked at (" << lookPosition.x << ", " << lookPosition.y << ")" << endl;
+    lookCount++;
+
+    //* if scoutbot ability is available, then look at whole map
+    for (const auto &upgrade : upgrades)
+    {
+        if (upgrade->getUpgradeType() == "ScoutBot")
+        {
+            cout << "ScoutBot ability activated. Looking at the entire map." << endl;
+            upgrade->upgradedAbility();
+            
+            ScoutRobot* scout = dynamic_cast<ScoutRobot*>(upgrade.get());
+            if (scout && !scout->abilityUsed)
+            {
+                lastEnemyPositions = scout->enemyPositions;
+            }
+            else
+            {
+                cout << "Error: ScoutRobot upgrade is not of type ScoutRobot." << endl;
+            }
+            return;
+        }
+    }
+
+    GenericRobot::look(lookPosition);
+    
     if (enemyPosition != Position(-1, -1))
     {
-        cout << "ThinkingRobot " << name << " is thinking about shooting at (" 
-             << enemyPosition.x << ", " << enemyPosition.y << ")" << endl;
-
-        if (ProbabilityCheck(70))
-        {
-            shoot(enemyPosition);
-            return;
-        } 
+        lastEnemyPositions.push_back(enemyPosition);
     }
 }
 #pragma endregion

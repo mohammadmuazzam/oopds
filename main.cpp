@@ -20,7 +20,7 @@ void MoveRobot(GenericRobot* robot);
 void LookRobot(GenericRobot* robot);
 void ShootRobot(GenericRobot* robot);
 
-string emptySpace = "*";
+string emptySpace = ".";
 
 
 int main()
@@ -41,14 +41,13 @@ int main()
     PrintMap();
     for (const auto& robot : simulationManager.robots)
     {
-        if (robot->getPosition() == Position(-1, -1))
-        {
-            cout << robot->name << " is dead" << endl;
-        }
-        else
-        {
-            cout << robot->name << " is at (" << robot->getPosition().x << ", " << robot->getPosition().y << ")" << endl;
-        }   
+            cout << robot->name << " is at (" << robot->getPosition().x << ", " << robot->getPosition().y << "). Health: " << robot->getHealth() << endl;
+    }
+
+    cout << "Dead robots:" << endl;
+    for (string deadRobot : simulationManager.deadRobots)
+    {
+        cout << deadRobot << endl;
     }
 
 }
@@ -140,11 +139,11 @@ void DefineRobot(smatch matches)
     string robotType = matches[1];
     string robotName = matches[2];
     Position robotPosition;
-    robotPosition.x = (matches[3] == "random") ? GetRandomNumber(0, simulationManager.mapSize.x) : stoi(matches[3]);
-    robotPosition.y = (matches[4] == "random") ? GetRandomNumber(0, simulationManager.mapSize.y) : stoi(matches[4]);
+    robotPosition.x = (matches[3] == "random") ? GetRandomNumber(1, simulationManager.mapSize.x) : stoi(matches[3]);
+    robotPosition.y = (matches[4] == "random") ? GetRandomNumber(1, simulationManager.mapSize.y) : stoi(matches[4]);
     
     //* check if the position is valid
-    while (!IsPositionValidOrOccupied(robotPosition))
+    while (!IsPositionValidAndUnoccupied(robotPosition))
     {
         robotPosition = GetRandomPosition(simulationManager.mapSize);
     }
@@ -163,6 +162,10 @@ void DefineRobot(smatch matches)
     else if (robotType == "LookingRobot")
     {
         robot = new LookingRobot();
+    }
+    else if (robotType == "ThinkingRobot")
+    {
+        robot = new ThinkingRobot();
     }
     else if (robotType == "GenericRobot") //* if it is generic robot, then give random type
     {
@@ -264,12 +267,21 @@ void PrintMap()
 #pragma region RandomAction
 void RandomAction(GenericRobot* robot)
 {
+    cout << "(" << robot->getPosition().x << ", " << robot->getPosition().y << "), " << robot->name << " - ";
+    //* if robot can think, then think first
+    if (robot->getType() == "ThinkingRobot")
+    {
+        cout << "THINK" << endl;
+        dynamic_cast<ThinkingRobot*>(robot)->think();
+        return;
+    }
+
     //* check if robot has been upgraded,
     //* if yes, then random number up to 3
     
 
     int action = GetRandomNumber(0, 2);
-    cout << "(" << robot->getPosition().x << ", " << robot->getPosition().y << "), " << robot->name << " - ";
+    
     switch (action)
     {
         case 0: //* default move

@@ -1,4 +1,51 @@
 #include "funcs.h"
+#include <cmath>
+#include <iostream>
+
+using namespace std;
+
+float GetDistance(const Position& pos1, const Position& pos2)
+{
+    return sqrt(pow(pos1.x - pos2.x, 2) + pow(pos1.y - pos2.y, 2));
+}
+
+Position AbsolutePosition(Position pos1)
+{
+    Position result;
+    result.x = abs(pos1.x);
+    result.y = abs(pos1.y);
+    return result;
+}
+
+//! Get the distance for shooting (Manhattan distance)
+int GetShootDistance(Position currentPosition, Position enemyPosition)
+{
+    Position absDistanceVector = AbsolutePosition(currentPosition - enemyPosition);
+    int distance = absDistanceVector.x + absDistanceVector.y;
+    return distance;
+}
+
+Position GetClosestPosition(const vector<Position>& positions)
+{
+    if (positions.empty())
+        return Position(-1, -1);
+
+    Position closest = positions[0];
+    float minDistance = std::numeric_limits<float>::max();
+
+    //* linear search for the closest position
+    for (const auto& pos : positions)
+    {
+        float distance = GetDistance(closest, pos);
+        if (distance < minDistance)
+        {
+            minDistance = distance;
+            closest = pos;
+        }
+    }
+
+    return closest;
+}
 
 bool ProbabilityCheck(int probability)
 {
@@ -12,8 +59,8 @@ int GetRandomNumber(int min, int max) {
 
 Position GetRandomPosition(Position limit) {
     Position pos;
-    pos.x = GetRandomNumber(0, limit.x);
-    pos.y = GetRandomNumber(0, limit.y);
+    pos.x = GetRandomNumber(1, limit.x);
+    pos.y = GetRandomNumber(1, limit.y);
     return pos;
 }
 
@@ -55,7 +102,7 @@ Position GetRandomPositionCustom(Position limit, bool ignoreZero) {
     return pos;
 }
 
-bool IsPositionValidOrOccupied(const Position& pos) {
+bool IsPositionValidAndUnoccupied(const Position& pos) {
     for (const auto& robot : simulationManager.robots)
     {
         //* check if the position is occupied by another robot
@@ -64,8 +111,11 @@ bool IsPositionValidOrOccupied(const Position& pos) {
             return false;
         }
     }
+    bool isValidX = (1 <= pos.x && pos.x <= simulationManager.mapSize.x);
+    bool isValidY = (1 <= pos.y && pos.y <= simulationManager.mapSize.y);
+     
 
-    return (0 <= pos.x && pos.x < simulationManager.mapSize.x && 0 <= pos.y && pos.y < simulationManager.mapSize.y);
+    return (isValidX && isValidY);
 }
 
 Position GetNeighborPosition(Position pos, int direction)
