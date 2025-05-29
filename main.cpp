@@ -222,6 +222,18 @@ void DefineRobot(smatch matches)
     {
         robot = new MovingRobot();
     }
+    else if (robotType == "LongShotBot") 
+    {
+        robot = new LongShotBot();       
+    }
+    else if (robotType == "SemiAutoBot") 
+    {
+        robot = new SemiAutoBot();       
+    }
+    else if (robotType == "ThirtyShotBot") 
+    {
+        robot = new ThirtyShotBot();       
+    }
     else
     {
         robot = new GenericRobot();
@@ -234,6 +246,7 @@ void DefineRobot(smatch matches)
 
     return;
 }
+
 
 void RandomAction(GenericRobot* robot)
 {
