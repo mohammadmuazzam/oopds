@@ -338,3 +338,100 @@ void ThinkingRobot::look(Position lookPosition)
 
 
 SimulationManager simulationManager;
+
+#pragma region Shooting Upgrades
+
+string LongShotBot::getUpgradeType()
+{
+    return "LongShotBot";
+}
+
+void LongShotBot::upgradedAbility()
+{
+    cout << "LongShotBot ability activated: Can shoot targets where x + y <= 3." << endl;
+
+    for (auto& robot : simulationManager.robots)
+    {
+        if (find_if(robot->upgrades.begin(), robot->upgrades.end(), [](const unique_ptr<UpgradeRobot>& upgrade) {
+            return upgrade->getUpgradeType() == "LongShotBot";
+        }) != robot->upgrades.end())
+        {
+            robot->shootRange = 3;
+        }
+    }
+}
+
+string SemiAutoBot::getUpgradeType()
+{
+    return "SemiAutoBot";
+}
+
+void SemiAutoBot::upgradedAbility()
+{
+    cout << "SemiAutoBot ability activated: Fires 3 rapid shells at one location, each with 70% chance to hit." << endl;
+
+    for (auto& robot : simulationManager.robots)
+    {
+        if (find_if(robot->upgrades.begin(), robot->upgrades.end(), [](const unique_ptr<UpgradeRobot>& upgrade) {
+            return upgrade->getUpgradeType() == "SemiAutoBot";
+        }) != robot->upgrades.end())
+        {
+            Position target = robot->enemyPosition;
+
+            if (target != Position(-1, -1))
+            {
+                GenericRobot* targetRobot = simulationManager.getRobotAtPosition(target + robot->getPosition());
+                if (targetRobot != nullptr)
+                {
+                    for (int i = 0; i < 3; ++i)
+                    {
+                        if (ProbabilityCheck(70))
+                        {
+                            cout << "SEMI-AUTO HIT " << targetRobot->getType() << ", " << targetRobot->name << endl;
+                            targetRobot->die();
+
+                            if (targetRobot->isDead()) break;
+                        }
+                        else
+                        {
+                            cout << "SEMI-AUTO MISS " << targetRobot->getType() << ", " << targetRobot->name << endl;
+                        }
+                    }
+                }
+                else
+                {
+                    cout << "SEMI-AUTO NO TARGET at (" << target.x + robot->getPosition().x << ", " << target.y + robot->getPosition().y << ")" << endl;
+                }
+
+                robot->numBullets -= 1;
+                if (robot->numBullets <= 0)
+                {
+                    cout << robot->getType() << "-" << robot->name << " ran out of bullets" << endl;
+                    robot->die();
+                }
+            }
+        }
+    }
+}
+
+string ThirtyShellBot::getUpgradeType()
+{
+    return "ThirtyShellBot";
+}
+
+void ThirtyShellBot::upgradedAbility()
+{
+    cout << "ThirtyShellBot ability activated: Ammo reloaded to 30 shells." << endl;
+
+    for (auto& robot : simulationManager.robots)
+    {
+        if (find_if(robot->upgrades.begin(), robot->upgrades.end(), [](const unique_ptr<UpgradeRobot>& upgrade) {
+            return upgrade->getUpgradeType() == "ThirtyShellBot";
+        }) != robot->upgrades.end())
+        {
+            robot->numBullets = 30;
+        }
+    }
+}
+
+#pragma endregion
