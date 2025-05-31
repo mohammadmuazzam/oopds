@@ -189,7 +189,19 @@ void GenericRobot::upgradeRandom()
     switch (upgradeArea)
     {
         case 0: //* upgrade moving
-            //TODO: implement moving upgrade, choose randomly between hidebot or jumpbot
+           int movingUpgradeType = GetRandomNumber(0, 1); // 0 = HideBot, 1 = JumpBot
+            if (movingUpgradeType == 0)
+            {
+                cout << "\tApplying HideBot upgrade." << endl;
+                upgrades.push_back(make_unique<HideBot>());
+                upgrades.back()->robot = this;
+            }
+            else
+            {
+                cout << "\tApplying JumpBot upgrade." << endl;
+                upgrades.push_back(make_unique<JumpBot>());
+                upgrades.back()->robot = this;
+            }
             break;
         case 1: //* upgrade looking
             //TODO: implement looking upgrade, choose randomly between scoutbot or trackbot
@@ -431,6 +443,37 @@ void ThirtyShellBot::upgradedAbility()
         {
             robot->setNumBullets(30);
         }
+    }
+}
+
+// HideBot ability implementation
+void HideBot::upgradedAbility()
+{
+    if (hideCount > 0)
+    {
+        cout << "HideBot ability activated: Robot is now hidden and cannot be hit." << endl;
+        robot->isVisible = false;  // robot becomes invisible to others (cannot be hit)
+        hideCount--;
+    }
+    else
+    {
+        cout << "HideBot: No more hides left." << endl;
+    }
+}
+
+// JumpBot ability implementation
+void JumpBot::upgradedAbility()
+{
+    if (jumpCount > 0)
+    {
+        Position newPos = GetRandomPosition(simulationManager.mapSize);  // jump to random position
+        cout << "JumpBot ability activated: Jumping to (" << newPos.x << ", " << newPos.y << ")." << endl;
+        robot->setPosition(newPos);
+        jumpCount--;
+    }
+    else
+    {
+        cout << "JumpBot: No more jumps left." << endl;
     }
 }
 
