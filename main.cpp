@@ -3,6 +3,7 @@
 #include <vector>
 #include <regex>
 #include <fstream>
+#include <streambuf>
 
 #include "robotsAndManager.h"
 #include "funcs.h"
@@ -21,11 +22,15 @@ void LookRobot(GenericRobot* robot);
 void ShootRobot(GenericRobot* robot);
 
 string emptySpace = ".";
+streambuf* originalCoutBuf = cout.rdbuf();
 
 
 int main()
 {
     string filename = "input.txt";
+    string outputFilename = "output.txt";
+    ofstream outputFile(outputFilename);
+    cout.rdbuf(outputFile.rdbuf());
     ReadFromFile(filename);
     //* initial print
     for (const auto& robot : simulationManager.robots)
@@ -49,6 +54,9 @@ int main()
     {
         cout << deadRobot << endl;
     }
+
+    cout.rdbuf(originalCoutBuf); //* restore cout buffers
+    cout << "Simulation finished and stored at: " << outputFilename << endl;
 
 }
 #pragma region ReadFromFile
@@ -267,9 +275,14 @@ void PrintMap()
 #pragma region RandomAction
 void RandomAction(GenericRobot* robot)
 {
+    //* for hidebot
+    if (!robot->getIsVisible())
+        robot->setIsVisible(true);
+    
     cout << "(" << robot->getPosition().x << ", " << robot->getPosition().y << "), " << robot->name << " - ";
+    
     //* if robot can think, then think first
-    if (robot->getType() == "ThinkingRobot")
+    if (robot->getType() == RobotType::ThinkingRobot)
     {
         cout << "THINK" << endl;
         dynamic_cast<ThinkingRobot*>(robot)->think();
@@ -278,9 +291,16 @@ void RandomAction(GenericRobot* robot)
 
     //* check if robot has been upgraded,
     //* if yes, then random number up to 3
-    
+    int maxAction = 2;
+    int upgradeIndex = -1;
+    if (robot->upgrades.size() > 0)
+    {
+        upgradeIndex = GetRandomNumber(0, robot->upgrades.size() - 1);
+        maxAction = 3; 
+        return;
+    }
 
-    int action = GetRandomNumber(0, 2);
+    int action = GetRandomNumber(0, maxAction);
     
     switch (action)
     {
@@ -302,32 +322,13 @@ void RandomAction(GenericRobot* robot)
             //#ShootRobot(robot);
             break;
         case 3:
-            //* go through upgrades and randomly choose one
-
+            cout << "UPGRADED ABILITY" << endl << "\t";
+            robot->upgrades[upgradeIndex]->upgradedAbility();
+            break;
+        default:
+            cout << "UNKNOWN ACTION: " << action << endl;
             break;
     }
+    cout << endl;
 }
 #pragma endregion
-
-//* Handle random actions for robots action
-void MoveRobot(GenericRobot* robot)
-{
-
-}
-
-void LookRobot(GenericRobot* robot)
-{
-
-}
-
-void ShootRobot(GenericRobot* robot)
-{
-
-}
-
-void ThinkRobot(GenericRobot* robot)
-{
-    //* Handle thinking logic for robots
-    //* This function can be used to implement more complex behavior for robots
-    //* For now, it is left empty as a placeholder
-}

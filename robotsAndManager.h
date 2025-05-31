@@ -67,12 +67,17 @@ enum class UpgradeName
 
 #pragma endregion
 
+ostream& operator<<(ostream& os, const Position& pos);
+ostream& operator<<(ostream& os, const RobotType& type);
+ostream& operator<<(ostream& os, const UpgradeName& name);
+ostream& operator<<(ostream& os, const UpgradeType& type);
+
 #pragma region GenericRobot
 class GenericRobot
 {
     protected:
         Position position;
-        string type;
+        RobotType type;
         int numBullets = 10;
         int health = 3;
         bool isVisible = true;
@@ -93,20 +98,20 @@ class GenericRobot
         virtual void die();
         void spawn();
 
-        void setPosition(Position newPosition);
-        void setNumBullets(int bullets);
+        void setPosition(Position newPosition) { position = newPosition; };
+        void setNumBullets(int bullets) { numBullets = bullets; };
         void setIsVisible(bool visible) { isVisible = visible; }
 
-        Position getPosition() const;
-        string getType() const;
-        int getMoveSteps() const;
-        int getLookRange() const;
+        Position getPosition() const { return position; }
+        RobotType getType() const { return type; }
+        int getMoveSteps() const { return moveSteps; }
+        int getLookRange() const { return lookRange; }
         int getNumBullets() const { return numBullets; }
         int getShootRange() const { return shootRange; };
         int getHealth() const { return health; }
         bool getIsVisible() const { return isVisible; }
 
-        bool isDead();
+        bool isDead() const { return health <= 0; }
 
         virtual ~GenericRobot();
 };
@@ -178,43 +183,48 @@ class UpgradeRobot
         virtual void upgradedAbility() = 0;
         virtual ~UpgradeRobot() = default;
 };
-#pragma region shooting upgrades
+#pragma region looking upgrades
 class ScoutRobot : public UpgradeRobot
 {
-public:
-    bool abilityUsed = false;
-    vector<Position> enemyPositions;
+    public:
+        bool abilityUsed = false;
+        vector<Position> enemyPositions;
 
-    ScoutRobot(GenericRobot* owner) { robot = owner; }
+        ScoutRobot(GenericRobot* owner) { robot = owner; }
+        ScoutRobot() = default;
 
-    UpgradeName getUpgradeName() override { return UpgradeName::ScoutBot; }
-    UpgradeType getUpgradeType() override { return UpgradeType::LookingUpgrade; }
+        UpgradeName getUpgradeName() override { return UpgradeName::ScoutBot; }
+        UpgradeType getUpgradeType() override { return UpgradeType::LookingUpgrade; }
 
-    void upgradedAbility() override;
-    const vector<Position>& getEnemyPositions() const { return enemyPositions; }
+        void upgradedAbility() override;
+        const vector<Position>& getEnemyPositions() const { return enemyPositions; }
 
 
 };
 
 class TrackRobot : public UpgradeRobot
 {
-protected:
-    int trackersRemaining = 3;                       // Can track up to 3 robots
-    vector<GenericRobot*> trackedRobots;             // Pointers to tracked enemies
+    private:
+        int trackersRemaining = 3;                       // Can track up to 3 robots
+        vector<GenericRobot*> trackedRobots;             // Pointers to tracked enemies
 
-public:
-    TrackRobot(GenericRobot* owner) { robot = owner; }
+    public:
+        TrackRobot(GenericRobot* owner) { robot = owner; }
+        TrackRobot() = default;
 
-    UpgradeName getUpgradeName() override { return UpgradeName::TrackingBot; }
-    UpgradeType getUpgradeType() override { return UpgradeType::LookingUpgrade; }
+        UpgradeName getUpgradeName() override { return UpgradeName::TrackingBot; }
+        UpgradeType getUpgradeType() override { return UpgradeType::LookingUpgrade; }
 
-    void upgradedAbility() override;
-    vector<Position> getTrackedPositions() const;
+        void upgradedAbility() override;
+        vector<Position> getTrackedPositions() const;
 };
-
+#pragma endregion
+#pragma region shooting upgrades
 class SemiAutoBot : public UpgradeRobot
 {
     public:
+        SemiAutoBot(GenericRobot* owner) { robot = owner; }
+        SemiAutoBot() = default;
         UpgradeName getUpgradeName() override { return UpgradeName::SemiAutoBot; }
         UpgradeType getUpgradeType() override { return UpgradeType::ShootingUpgrade; }
         void upgradedAbility() override;
@@ -223,6 +233,8 @@ class SemiAutoBot : public UpgradeRobot
 class ThirtyShellBot : public UpgradeRobot
 {
     public:
+        ThirtyShellBot(GenericRobot* owner) { robot = owner; }
+        ThirtyShellBot() = default;
         UpgradeName getUpgradeName() override { return UpgradeName::ThirtyShellBot; }
         UpgradeType getUpgradeType() override { return UpgradeType::ShootingUpgrade; }
         void upgradedAbility() override;
@@ -232,6 +244,8 @@ class ThirtyShellBot : public UpgradeRobot
 class LongShotBot : public UpgradeRobot
 {
     public:
+        LongShotBot(GenericRobot* owner) { robot = owner; }
+        LongShotBot() = default;
         UpgradeName getUpgradeName() override { return UpgradeName::LongShotBot; }
         UpgradeType getUpgradeType() override { return UpgradeType::ShootingUpgrade; }
         void upgradedAbility() override;
@@ -244,6 +258,8 @@ private:
     int hideCount = 3; // can hide 3 times per match
 
 public:
+    HideBot(GenericRobot* owner) { robot = owner; }
+    HideBot() = default;
     UpgradeName getUpgradeName() override { return UpgradeName::HideBot; }
     UpgradeType getUpgradeType() override { return UpgradeType::MovingUpgrade; }
     void upgradedAbility() override;
@@ -252,13 +268,16 @@ public:
 
 class JumpBot : public UpgradeRobot
 {
-private:
-    int jumpCount = 3; // can jump 3 times per match
+    private:
+        int jumpCount = 3; // can jump 3 times per match
+        Position jumpPosition = Position(-1, -1); // position to jump to
 
-public:
-    UpgradeName getUpgradeName() override { return UpgradeName::JumpBot; }
-    UpgradeType getUpgradeType() override { return UpgradeType::MovingUpgrade; }
-    void upgradedAbility() override;
+    public:
+        JumpBot(GenericRobot* owner) { robot = owner; }
+        JumpBot() = default;
+        UpgradeName getUpgradeName() override { return UpgradeName::JumpBot; }
+        UpgradeType getUpgradeType() override { return UpgradeType::MovingUpgrade; }
+        void upgradedAbility() override;
 };
 #pragma endregion
 

@@ -7,9 +7,53 @@
 
 using namespace std;
 
+#pragma region ostream
+ostream& operator<<(ostream& os, const Position& pos)
+{
+    os << "(" << pos.x << ", " << pos.y << ")";
+    return os;
+}
+
+ostream& operator<<(ostream& os, const RobotType& type)
+{
+    switch (type)
+    {
+        case RobotType::GenericRobot: os << "GenericRobot"; break;
+        case RobotType::MovingRobot: os << "MovingRobot"; break;
+        case RobotType::ShootingRobot: os << "ShootingRobot"; break;
+        case RobotType::LookingRobot: os << "LookingRobot"; break;
+        case RobotType::ThinkingRobot: os << "ThinkingRobot"; break;
+    }
+    return os;
+}
+
+ostream& operator<<(ostream& os, const UpgradeType& type)
+{
+    switch (type)
+    {
+        case UpgradeType::MovingUpgrade: os << "MovingUpgrade"; break;
+        case UpgradeType::ShootingUpgrade: os << "ShootingUpgrade"; break;
+        case UpgradeType::LookingUpgrade: os << "LookingUpgrade"; break;
+    }
+    return os;
+}
+
+ostream& operator<<(ostream& os, const UpgradeName& name)
+{
+    switch (name)
+    {
+        case UpgradeName::ScoutBot: os << "ScoutBot"; break;
+        case UpgradeName::TrackingBot: os << "TrackingBot"; break;
+        case UpgradeName::SemiAutoBot: os << "SemiAutoBot"; break;
+        case UpgradeName::ThirtyShellBot: os << "ThirtyShellBot"; break;
+        case UpgradeName::LongShotBot: os << "LongShotBot"; break;
+        case UpgradeName::HideBot: os << "HideBot"; break;
+        case UpgradeName::JumpBot: os << "JumpBot"; break;
+    }
+    return os;
+}
+
 #pragma region SimulationManager
-
-
 
 GenericRobot* SimulationManager::getRobotAtPosition(Position pos)
 {
@@ -25,36 +69,6 @@ GenericRobot* SimulationManager::getRobotAtPosition(Position pos)
 }
 #pragma endregion
 #pragma region GenericRobot
-
-bool GenericRobot::isDead()
-{
-    return health <= 0;
-}
-
-void GenericRobot::setPosition(Position newPosition)
-{
-    position = newPosition;
-}
-
-Position GenericRobot::getPosition() const  
-{
-    return position;
-}
-
-string GenericRobot::getType() const
-{
-    return type;
-}
-
-int GenericRobot::getMoveSteps() const
-{
-    return moveSteps;
-}
-
-int GenericRobot::getLookRange() const
-{
-    return lookRange;
-}
 
 void GenericRobot::move(Position moveDistance)
 {
@@ -120,7 +134,7 @@ void GenericRobot::die()
     else
     {
         spawn();
-        cout << "\t\t Respawning at (" << position.x << ", " << position.y << ")" << endl;
+        cout << "\t\tRespawning at (" << position.x << ", " << position.y << ")" << endl;
     }
 }
 
@@ -141,13 +155,14 @@ void GenericRobot::shoot(Position enemyPosition)
         cout << "TARGET ACQUIRED: " << enemyRobot->name << endl;
         if (ProbabilityCheck(70) && enemyRobot->isVisible)
         {
-            cout << "HIT " << enemyRobot->getType() << ", " << enemyRobot->name  << endl;
+            cout << "\tHIT " << enemyRobot->getType() << ", " << enemyRobot->name  << endl;
             enemyRobot->die();
             //* upgrade robot
+            upgradeRandom();
         }
         else
         {
-            cout << "MISS " << enemyRobot->getType() << ", " << enemyRobot->name << endl;
+            cout << "\tMISS " << enemyRobot->getType() << ", " << enemyRobot->name << endl;
         }
 
         enemyPosition = Position(-1, -1); // reset enemy position after shooting
@@ -169,58 +184,87 @@ void GenericRobot::shoot(Position enemyPosition)
 
 void GenericRobot::upgradeRandom()
 {
-    int upgradeTypeInt;
+    int upgradeArea;
+
+    vector<UpgradeType> availableUpgrades = { UpgradeType::MovingUpgrade, UpgradeType::ShootingUpgrade, UpgradeType::LookingUpgrade };
+    vector<UpgradeType> appliedUpgrades;
+    //* return if maximum upgrades reached
     if (upgrades.size() >= 3)
     {
         cout << "Maximum upgrades reached. No more upgrades can be applied." << endl;
         return;
     }
-    //! CONTINUE HERE
-    if (upgrades.size() == 1)
-    {
-        for (const auto& upgrade : upgrades)
-        {
-            upgradeTypeInt = static_cast<int>(upgrade->getUpgradeType());
-        }
-    }
 
-    int upgradeArea = GetRandomNumber(0, 2);
+    for (const auto& upgrade : upgrades)
+    {
+        cout << "\tAlready applied upgrade: " << upgrade->getUpgradeName() << "(" << upgrade->getUpgradeType() << ")" << endl;
+        appliedUpgrades.push_back(upgrade->getUpgradeType());
+        availableUpgrades.erase(remove(availableUpgrades.begin(), 
+                                availableUpgrades.end(), 
+                                upgrade->getUpgradeType()), 
+                                availableUpgrades.end());
+    }
+    
+    //* for slightly faster simulation
+    if (upgrades.size() == 1) //* get random upgrade ignoring the applied upgrade
+        upgradeArea = (GetRandomNumber(0, 1) == 0) ? static_cast<int>(availableUpgrades[0]) : static_cast<int>(availableUpgrades[1]);
+    else if (upgrades.size() == 2)
+        upgradeArea = static_cast<int>(availableUpgrades[0]); //* only one upgrade left to apply
+    else //* if no upgrade yet
+        upgradeArea = GetRandomNumber(0, 2);
+
+    int randomUpgradeName;
 
     switch (upgradeArea)
     {
         case 0: //* upgrade moving
-           int movingUpgradeType = GetRandomNumber(0, 1); // 0 = HideBot, 1 = JumpBot
-            if (movingUpgradeType == 0)
+            randomUpgradeName = GetRandomNumber(0, 1); // 0 = HideBot, 1 = JumpBot
+            if (randomUpgradeName == 0)
             {
                 cout << "\tApplying HideBot upgrade." << endl;
-                upgrades.push_back(make_unique<HideBot>());
-                upgrades.back()->robot = this;
+                upgrades.push_back(make_unique<HideBot>(this));
             }
             else
             {
                 cout << "\tApplying JumpBot upgrade." << endl;
-                upgrades.push_back(make_unique<JumpBot>());
-                upgrades.back()->robot = this;
+                upgrades.push_back(make_unique<JumpBot>(this));
             }
             break;
         case 1: //* upgrade looking
-{
-        int choice = GetRandomNumber(0, 1);
-        if (choice == 0) {
-            upgrades.emplace_back(make_unique<ScoutRobot>(this));
-            cout << name << " upgraded to ScoutBot." << endl;
-        } else {
-            upgrades.emplace_back(make_unique<TrackRobot>(this));
-            cout << name << " upgraded to TrackBot." << endl;
-        }
-    break;
-}
+            {
+                randomUpgradeName = GetRandomNumber(0, 1);
+                if (randomUpgradeName == 0) 
+                {
+                    upgrades.push_back(make_unique<ScoutRobot>(this));
+                    cout << "\tApplying ScoutBot upgrade" << endl;
+                } else 
+                {
+                    upgrades.push_back(make_unique<TrackRobot>(this));
+                    cout << "\tApplying TrackBot upgrade" << endl;
+                }
+                break;
+            }
             break;
         case 2: //* upgrade shooting
-            //TODO: implement shooting upgrade, choose randomly between longshotbot or semiautobot or thirtyshellbot
+            randomUpgradeName = GetRandomNumber(0, 2); // 0 = SemiAutoBot, 1 = ThirtyShellBot, 2 = LongShotBot
+            switch (randomUpgradeName)
+            {
+                case 0:
+                    cout << "\tApplying SemiAutoBot upgrade." << endl;
+                    upgrades.push_back(make_unique<SemiAutoBot>(this));
+                    break;
+                case 1:
+                    cout << "\tApplying ThirtyShellBot upgrade." << endl;
+                    upgrades.push_back(make_unique<ThirtyShellBot>(this));
+                    break;
+                case 2:
+                    cout << "\tApplying LongShotBot upgrade." << endl;
+                    upgrades.push_back(make_unique<LongShotBot>(this));
+                    break;
+            }
             break;
         default:
-            cout << "No upgrade applied." << endl;
+            cout << "Error: No upgrade applied. upgradeArea: " << upgradeArea << endl;
     }
 }
 
@@ -235,7 +279,7 @@ GenericRobot::~GenericRobot()
 
 MovingRobot::MovingRobot()
 {
-    type = "MovingRobot";
+    type = RobotType::MovingRobot;
     moveSteps = 2; 
 }
 
@@ -245,7 +289,7 @@ MovingRobot::MovingRobot()
 
 ShootingRobot::ShootingRobot()
 {
-    type = "ShootingRobot";
+    type = RobotType::ShootingRobot;
     numBullets = 15; 
 };
 
@@ -255,7 +299,7 @@ ShootingRobot::ShootingRobot()
 
 LookingRobot::LookingRobot()
 {
-    type = "LookingRobot";
+    type = RobotType::LookingRobot;
     lookRange = 2; 
 }
 
@@ -264,18 +308,16 @@ LookingRobot::LookingRobot()
 #pragma region ThinkingRobot
 ThinkingRobot::ThinkingRobot()
 {
-    type = "ThinkingRobot";
-    lastEnemyPositions.push_back(enemyPosition);
+    type = RobotType::ThinkingRobot;
 }
 
 void ThinkingRobot::think()
 {
     if (lookLimit == 0)
     {
-        lookLimit = GetRandomNumber(2, 5);
-        return;
+        lookLimit = GetRandomNumber(1, 3);
     }
-
+    
     //* if no data about enemy positions, then look around
     if (lastEnemyPositions.empty() && lookCount <= lookLimit)
     {
@@ -302,7 +344,7 @@ void ThinkingRobot::think()
     {
         lookCount = 0; // reset look count
         lookLimit = 0; // reset look limit1
-        cout << "\tLook count exceeded and no enemy in sight. Moving randomly.\n\t" << endl;
+        cout << "\t... Moving randomly.\n\t";
         move(GetRandomPositionCustom(Position(-moveSteps, moveSteps)));
         return;
     }
@@ -316,13 +358,13 @@ void ThinkingRobot::think()
             Position movePosition = closestEnemyPosition - position;
             if (movePosition.x > moveSteps) movePosition.x = moveSteps;
             if (movePosition.y > moveSteps) movePosition.y = moveSteps;
-
+            cout << "\t... Moving towards last known enemy position\n\t";
             move(movePosition);
             return;
         }
         else
         {
-            cout << "SHOOT" << endl;
+            cout << "\t... In range with last known enemy position. Shooting." << endl;
             shoot(closestEnemyPosition);
             //* remove the closest enemy position from the list
             lastEnemyPositions.erase(remove(lastEnemyPositions.begin(), lastEnemyPositions.end(), closestEnemyPosition), lastEnemyPositions.end());
@@ -340,7 +382,6 @@ void ThinkingRobot::think()
 
 void ThinkingRobot::look(Position lookPosition)
 {
-    cout << "looked at (" << lookPosition.x << ", " << lookPosition.y << ")" << endl;
     lookCount++;
 
     //* if scoutbot ability is available, then look at whole map
@@ -363,11 +404,12 @@ void ThinkingRobot::look(Position lookPosition)
             return;
         }
     }
-
+    cout << "\t... ";
     GenericRobot::look(lookPosition);
     
     if (enemyPosition != Position(-1, -1))
     {
+        cout << "\t...Enemy found at (" << enemyPosition.x + position.x << ", " << enemyPosition.y + position.y << ")" << endl;
         lastEnemyPositions.push_back(enemyPosition);
     }
 }
@@ -455,7 +497,9 @@ void ThirtyShellBot::upgradedAbility()
         }
     }
 }
+#pragma endregion
 
+#pragma region Looking Upgrades
 void ScoutRobot::upgradedAbility() {
     if (abilityUsed) {
         cout << "Ability already used." << endl;
@@ -544,14 +588,15 @@ void HideBot::upgradedAbility()
 void JumpBot::upgradedAbility()
 {
     if (jumpCount > 0)
-    {
-        Position newPos = Position(-1, -1);
-        while (!IsPositionValidAndUnoccupied(newPos))
+    {\
+        while (!IsPositionValidAndUnoccupied(jumpPosition))
         {
-            newPos = GetRandomPosition(simulationManager.mapSize);
+            jumpPosition = GetRandomPosition(simulationManager.mapSize);
         } 
-        cout << "JumpBot ability activated: Jumping to (" << newPos.x << ", " << newPos.y << ")." << endl;
-        robot->setPosition(newPos);
+        cout << "JumpBot ability activated: Jumping to (" << jumpPosition.x << ", " << jumpPosition.y << ")." << endl;
+        robot->setPosition(jumpPosition);
+        jumpPosition = Position(-1, -1);
+
         jumpCount--;
     }
     else

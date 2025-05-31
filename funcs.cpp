@@ -54,6 +54,10 @@ bool ProbabilityCheck(int probability)
 }
 
 int GetRandomNumber(int min, int max) {
+    if (min == max)
+        return min;
+    if (min > max) 
+        swap(min, max);
     return rand() % (max - min + 1) + min;
 }
 
