@@ -84,6 +84,8 @@ class GenericRobot
         string name;
         Position enemyPosition;
         vector<unique_ptr<UpgradeRobot>> upgrades;
+        void setIsVisible(bool visible) { isVisible = visible; }
+        bool getIsVisible() const { return isVisible; }
 
         void upgradeRandom();
 
@@ -211,6 +213,32 @@ class LongShotBot : public UpgradeRobot
         UpgradeType getUpgradeType() override { return UpgradeType::ShootingUpgrade; }
         void upgradedAbility() override;
 };
+
+
+class HideBot : public UpgradeRobot
+{
+private:
+    int hideCount = 3; // can hide 3 times per match
+
+public:
+    UpgradeName getUpgradeName() override { return UpgradeName::HideBot; }
+    UpgradeType getUpgradeType() override { return UpgradeType::MovingUpgrade; }
+    void upgradedAbility() override;
+};
+
+
+class JumpBot : public UpgradeRobot
+{
+private:
+    int jumpCount = 3; // can jump 3 times per match
+
+public:
+    UpgradeName getUpgradeName() override { return UpgradeName::JumpBot; }
+    UpgradeType getUpgradeType() override { return UpgradeType::MovingUpgrade; }
+    void upgradedAbility() override;
+};
+
+
 #pragma endregion
 
 extern SimulationManager simulationManager;
