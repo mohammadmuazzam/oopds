@@ -179,12 +179,35 @@ class UpgradeRobot
 
 class ScoutRobot : public UpgradeRobot
 {
-    public:
-        bool abilityUsed = false;
-    public:
-        vector<Position> enemyPositions;
-        //* change abilityUsed after using the ability
-        void upgradedAbility() override;
+public:
+    bool abilityUsed = false;
+    vector<Position> enemyPositions;
+
+    ScoutRobot(GenericRobot* owner) { robot = owner; }
+
+    UpgradeName getUpgradeName() override { return UpgradeName::ScoutBot; }
+    UpgradeType getUpgradeType() override { return UpgradeType::LookingUpgrade; }
+
+    void upgradedAbility() override;
+    const vector<Position>& getEnemyPositions() const { return enemyPositions; }
+
+
+};
+
+class TrackRobot : public UpgradeRobot
+{
+protected:
+    int trackersRemaining = 3;                       // Can track up to 3 robots
+    vector<GenericRobot*> trackedRobots;             // Pointers to tracked enemies
+
+public:
+    TrackRobot(GenericRobot* owner) { robot = owner; }
+
+    UpgradeName getUpgradeName() override { return UpgradeName::TrackingBot; }
+    UpgradeType getUpgradeType() override { return UpgradeType::LookingUpgrade; }
+
+    void upgradedAbility() override;
+    vector<Position> getTrackedPositions() const;
 };
 
 class SemiAutoBot : public UpgradeRobot
