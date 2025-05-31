@@ -84,9 +84,7 @@ class GenericRobot
         string name;
         Position enemyPosition;
         vector<unique_ptr<UpgradeRobot>> upgrades;
-        void setIsVisible(bool visible) { isVisible = visible; }
-        bool getIsVisible() const { return isVisible; }
-
+        
         void upgradeRandom();
 
         virtual void look(Position lookPosition);
@@ -97,6 +95,7 @@ class GenericRobot
 
         void setPosition(Position newPosition);
         void setNumBullets(int bullets);
+        void setIsVisible(bool visible) { isVisible = visible; }
 
         Position getPosition() const;
         string getType() const;
@@ -105,6 +104,7 @@ class GenericRobot
         int getNumBullets() const { return numBullets; }
         int getShootRange() const { return shootRange; };
         int getHealth() const { return health; }
+        bool getIsVisible() const { return isVisible; }
 
         bool isDead();
 
@@ -168,7 +168,7 @@ class SimulationManager
         //#bool isPositionOccupied(Position pos);
 };
 #pragma endregion
-#pragma region Upgrade Robots
+
 class UpgradeRobot
 {
     public:
@@ -178,7 +178,7 @@ class UpgradeRobot
         virtual void upgradedAbility() = 0;
         virtual ~UpgradeRobot() = default;
 };
-
+#pragma region shooting upgrades
 class ScoutRobot : public UpgradeRobot
 {
     public:
@@ -213,8 +213,8 @@ class LongShotBot : public UpgradeRobot
         UpgradeType getUpgradeType() override { return UpgradeType::ShootingUpgrade; }
         void upgradedAbility() override;
 };
-
-
+#pragma endregion
+#pragma region moving upgrades
 class HideBot : public UpgradeRobot
 {
 private:
@@ -237,8 +237,6 @@ public:
     UpgradeType getUpgradeType() override { return UpgradeType::MovingUpgrade; }
     void upgradedAbility() override;
 };
-
-
 #pragma endregion
 
 extern SimulationManager simulationManager;

@@ -446,13 +446,16 @@ void ThirtyShellBot::upgradedAbility()
     }
 }
 
+#pragma endregion
+
+#pragma region Moving Upgrades
 // HideBot ability implementation
 void HideBot::upgradedAbility()
 {
     if (hideCount > 0)
     {
         cout << "HideBot ability activated: Robot is now hidden and cannot be hit." << endl;
-        robot->isVisible = false;  // robot becomes invisible to others (cannot be hit)
+        robot->setIsVisible(false);
         hideCount--;
     }
     else
@@ -466,7 +469,11 @@ void JumpBot::upgradedAbility()
 {
     if (jumpCount > 0)
     {
-        Position newPos = GetRandomPosition(simulationManager.mapSize);  // jump to random position
+        Position newPos = Position(-1, -1);
+        while (!IsPositionValidAndUnoccupied(newPos))
+        {
+            newPos = GetRandomPosition(simulationManager.mapSize);
+        } 
         cout << "JumpBot ability activated: Jumping to (" << newPos.x << ", " << newPos.y << ")." << endl;
         robot->setPosition(newPos);
         jumpCount--;
