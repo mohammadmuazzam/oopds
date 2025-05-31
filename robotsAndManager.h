@@ -171,6 +171,21 @@ class ScoutRobot : public UpgradeRobot
         void upgradedAbility() override;
 };
 
+class SemiAutoBot : public UpgradeRobot
+{
+    public:
+        string getUpgradeType() override;
+        void upgradedAbility() override;
+};
+
+class ThirtyShellBot : public UpgradeRobot
+{
+    public:
+        string getUpgradeType() override;
+        void upgradedAbility() override;
+};
+
+
 class LongShotBot : public UpgradeRobot
 {
     public:
