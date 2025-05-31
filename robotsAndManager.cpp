@@ -204,7 +204,17 @@ void GenericRobot::upgradeRandom()
             }
             break;
         case 1: //* upgrade looking
-            //TODO: implement looking upgrade, choose randomly between scoutbot or trackbot
+{
+        int choice = GetRandomNumber(0, 1);
+        if (choice == 0) {
+            upgrades.emplace_back(make_unique<ScoutRobot>(this));
+            cout << name << " upgraded to ScoutBot." << endl;
+        } else {
+            upgrades.emplace_back(make_unique<TrackRobot>(this));
+            cout << name << " upgraded to TrackBot." << endl;
+        }
+    break;
+}
             break;
         case 2: //* upgrade shooting
             //TODO: implement shooting upgrade, choose randomly between longshotbot or semiautobot or thirtyshellbot
@@ -445,6 +455,72 @@ void ThirtyShellBot::upgradedAbility()
         }
     }
 }
+
+void ScoutRobot::upgradedAbility() {
+    if (abilityUsed) {
+        cout << "Ability already used." << endl;
+        return;
+    }
+
+    cout << "Scanning entire battlefield..." << endl;
+
+    enemyPositions.clear();
+
+    //Loop through all robots in the simulation
+    for (const auto& r : simulationManager.robots) {
+        if (r.get() != robot && !r->isDead()) {
+            Position enemyPos = r->getPosition();
+            enemyPositions.push_back(enemyPos);
+            cout << "\tEnemy: " << r->name << " at (" << enemyPos.x << ", " << enemyPos.y << ")" << endl;
+        }
+    }
+
+    abilityUsed = true;
+}
+
+void TrackRobot::upgradedAbility() {
+    if (trackersRemaining <= 0) {
+        cout << "No more trackers available." << endl;
+        return;
+    }
+
+    cout << "[TrackBot] Scanning nearby for enemies..." << endl;
+
+    //Allow the robot to check surrounding
+    vector<Position> offsets = {
+        {-1, -1}, {-1, 0}, {-1, 1},
+        {0, -1},           {0, 1},
+        {1, -1}, {1, 0}, {1, 1}
+    };
+
+    for (const auto& offset : offsets) {
+        Position checkPos = robot->getPosition() + offset;
+        GenericRobot* target = simulationManager.getRobotAtPosition(checkPos);
+
+        if (target && target != robot && !target->isDead()) {
+            if (std::find(trackedRobots.begin(), trackedRobots.end(), target) == trackedRobots.end()) {
+                trackedRobots.push_back(target);
+                trackersRemaining--;
+                cout << "[TrackBot] Tracker placed on: " << target->name << endl;
+                return;
+            }
+        }
+    }
+
+    cout << "[TrackBot] No valid nearby enemy to track." << endl;
+}
+
+//Return the live position of all currently tracked enemy robots
+vector<Position> TrackRobot::getTrackedPositions() const {
+    vector<Position> positions;
+    for (const auto& tracked : trackedRobots) {
+        if (!tracked->isDead()) {
+            positions.push_back(tracked->getPosition());
+        }
+    }
+    return positions;
+}
+
 
 #pragma endregion
 
