@@ -1,6 +1,7 @@
 #include "robotsAndManager.h"
 
 int GetRandomNumber(int min, int max);
+int GetRandomNumber(int min, int max, int ignoreNumber);
 
 Position AbsolutePosition(Position pos1);
 

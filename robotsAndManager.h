@@ -17,44 +17,56 @@ class Position
         Position(int x, int y) : x(x), y(y) {}
 
         //* check equality and non-equality
-        bool operator== (const Position& other) const
-        {
-            bool equal = (x == other.x && y == other.y);
-            return equal;
-        }
+        bool operator== (const Position& other) const { return (x == other.x && y == other.y); }
 
-        bool operator!= (const Position& other) const
-        {
-            return !(*this == other);
-        }
+        bool operator!= (const Position& other) const { return !(*this == other); }
+        
         //* position addition
-        Position operator+ (const Position& other) const
-        {
-            return Position(x + other.x, y + other.y);
-        }
+        Position operator+ (const Position& other) const { return Position(x + other.x, y + other.y); }
         //* position addition with int
-        Position operator+ (const int value) const
-        {
-            return Position(x + value, y + value);
-        }
+        Position operator+ (const int value) const { return Position(x + value, y + value); }
 
-        Position operator- (const Position& other) const
-        {
-            return Position(x - other.x, y - other.y);
-        }
+        Position operator- (const Position& other) const { return Position(x - other.x, y - other.y); }
         //* position subtraction with int
-        Position operator- (const int value) const
-        {
-            return Position(x - value, y - value);
-        }
+        Position operator- (const int value) const { return Position(x - value, y - value); }
 
-        void operator+= (const Position& other)
-        {
-            x += other.x;
-            y += other.y;
-        }
+        void operator+= (const Position& other) { *this = *this + other; }
 };
 #pragma endregion
+
+#pragma region enums
+enum class RobotType
+{
+    GenericRobot,
+    MovingRobot,
+    ShootingRobot,
+    LookingRobot,
+    ThinkingRobot
+};
+
+enum class UpgradeType
+{
+    MovingUpgrade = 0,
+    ShootingUpgrade = 1,
+    LookingUpgrade = 2,
+};
+
+enum class UpgradeName
+{
+    //* looking upgrades
+    ScoutBot,
+    TrackingBot,
+    //* Shooting Upgrades
+    SemiAutoBot,
+    ThirtyShellBot,
+    LongShotBot,
+    //* Moving Upgrades
+    HideBot,
+    JumpBot
+};
+
+#pragma endregion
+
 #pragma region GenericRobot
 class GenericRobot
 {
@@ -63,10 +75,12 @@ class GenericRobot
         string type;
         int numBullets = 10;
         int health = 3;
+        bool isVisible = true;
+        
+    public:
         int moveSteps = 1;
         int lookRange = 1;
         int shootRange = 1;
-    public:
         string name;
         Position enemyPosition;
         vector<unique_ptr<UpgradeRobot>> upgrades;
@@ -86,6 +100,7 @@ class GenericRobot
         string getType() const;
         int getMoveSteps() const;
         int getLookRange() const;
+        int getNumBullets() const { return numBullets; }
         int getShootRange() const { return shootRange; };
         int getHealth() const { return health; }
 
@@ -155,7 +170,9 @@ class SimulationManager
 class UpgradeRobot
 {
     public:
-        virtual string getUpgradeType() = 0;
+        GenericRobot* robot;
+        virtual UpgradeType getUpgradeType() = 0;
+        virtual UpgradeName getUpgradeName() = 0;
         virtual void upgradedAbility() = 0;
         virtual ~UpgradeRobot() = default;
 };
@@ -166,7 +183,6 @@ class ScoutRobot : public UpgradeRobot
         bool abilityUsed = false;
     public:
         vector<Position> enemyPositions;
-        string getUpgradeType() override;
         //* change abilityUsed after using the ability
         void upgradedAbility() override;
 };
@@ -174,14 +190,16 @@ class ScoutRobot : public UpgradeRobot
 class SemiAutoBot : public UpgradeRobot
 {
     public:
-        string getUpgradeType() override;
+        UpgradeName getUpgradeName() override { return UpgradeName::SemiAutoBot; }
+        UpgradeType getUpgradeType() override { return UpgradeType::ShootingUpgrade; }
         void upgradedAbility() override;
 };
 
 class ThirtyShellBot : public UpgradeRobot
 {
     public:
-        string getUpgradeType() override;
+        UpgradeName getUpgradeName() override { return UpgradeName::ThirtyShellBot; }
+        UpgradeType getUpgradeType() override { return UpgradeType::ShootingUpgrade; }
         void upgradedAbility() override;
 };
 
@@ -189,7 +207,8 @@ class ThirtyShellBot : public UpgradeRobot
 class LongShotBot : public UpgradeRobot
 {
     public:
-        string getUpgradeType() override;
+        UpgradeName getUpgradeName() override { return UpgradeName::LongShotBot; }
+        UpgradeType getUpgradeType() override { return UpgradeType::ShootingUpgrade; }
         void upgradedAbility() override;
 };
 #pragma endregion

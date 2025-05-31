@@ -139,7 +139,7 @@ void GenericRobot::shoot(Position enemyPosition)
     {
         GenericRobot* enemyRobot = simulationManager.getRobotAtPosition(shootPosition);
         cout << "TARGET ACQUIRED: " << enemyRobot->name << endl;
-        if (ProbabilityCheck(70))
+        if (ProbabilityCheck(70) && enemyRobot->isVisible)
         {
             cout << "HIT " << enemyRobot->getType() << ", " << enemyRobot->name  << endl;
             enemyRobot->die();
@@ -169,6 +169,21 @@ void GenericRobot::shoot(Position enemyPosition)
 
 void GenericRobot::upgradeRandom()
 {
+    int upgradeTypeInt;
+    if (upgrades.size() >= 3)
+    {
+        cout << "Maximum upgrades reached. No more upgrades can be applied." << endl;
+        return;
+    }
+    //! CONTINUE HERE
+    if (upgrades.size() == 1)
+    {
+        for (const auto& upgrade : upgrades)
+        {
+            upgradeTypeInt = static_cast<int>(upgrade->getUpgradeType());
+        }
+    }
+
     int upgradeArea = GetRandomNumber(0, 2);
 
     switch (upgradeArea)
@@ -309,7 +324,7 @@ void ThinkingRobot::look(Position lookPosition)
     //* if scoutbot ability is available, then look at whole map
     for (const auto &upgrade : upgrades)
     {
-        if (upgrade->getUpgradeType() == "ScoutBot")
+        if (upgrade->getUpgradeName() == UpgradeName::ScoutBot)
         {
             cout << "ScoutBot ability activated. Looking at the entire map." << endl;
             upgrade->upgradedAbility();
@@ -341,11 +356,6 @@ SimulationManager simulationManager;
 
 #pragma region Shooting Upgrades
 
-string LongShotBot::getUpgradeType()
-{
-    return "LongShotBot";
-}
-
 void LongShotBot::upgradedAbility()
 {
     cout << "LongShotBot ability activated: Can shoot targets where x + y <= 3." << endl;
@@ -353,17 +363,12 @@ void LongShotBot::upgradedAbility()
     for (auto& robot : simulationManager.robots)
     {
         if (find_if(robot->upgrades.begin(), robot->upgrades.end(), [](const unique_ptr<UpgradeRobot>& upgrade) {
-            return upgrade->getUpgradeType() == "LongShotBot";
+            return upgrade->getUpgradeName() == UpgradeName::LongShotBot;
         }) != robot->upgrades.end())
         {
             robot->shootRange = 3;
         }
     }
-}
-
-string SemiAutoBot::getUpgradeType()
-{
-    return "SemiAutoBot";
 }
 
 void SemiAutoBot::upgradedAbility()
@@ -373,7 +378,7 @@ void SemiAutoBot::upgradedAbility()
     for (auto& robot : simulationManager.robots)
     {
         if (find_if(robot->upgrades.begin(), robot->upgrades.end(), [](const unique_ptr<UpgradeRobot>& upgrade) {
-            return upgrade->getUpgradeType() == "SemiAutoBot";
+            return upgrade->getUpgradeName() == UpgradeName::SemiAutoBot;
         }) != robot->upgrades.end())
         {
             Position target = robot->enemyPosition;
@@ -403,8 +408,8 @@ void SemiAutoBot::upgradedAbility()
                     cout << "SEMI-AUTO NO TARGET at (" << target.x + robot->getPosition().x << ", " << target.y + robot->getPosition().y << ")" << endl;
                 }
 
-                robot->numBullets -= 1;
-                if (robot->numBullets <= 0)
+                robot->setNumBullets(robot->getNumBullets() - 1);
+                if (robot->getNumBullets() <= 0)
                 {
                     cout << robot->getType() << "-" << robot->name << " ran out of bullets" << endl;
                     robot->die();
@@ -414,11 +419,6 @@ void SemiAutoBot::upgradedAbility()
     }
 }
 
-string ThirtyShellBot::getUpgradeType()
-{
-    return "ThirtyShellBot";
-}
-
 void ThirtyShellBot::upgradedAbility()
 {
     cout << "ThirtyShellBot ability activated: Ammo reloaded to 30 shells." << endl;
@@ -426,10 +426,10 @@ void ThirtyShellBot::upgradedAbility()
     for (auto& robot : simulationManager.robots)
     {
         if (find_if(robot->upgrades.begin(), robot->upgrades.end(), [](const unique_ptr<UpgradeRobot>& upgrade) {
-            return upgrade->getUpgradeType() == "ThirtyShellBot";
+            return upgrade->getUpgradeName() == UpgradeName::ThirtyShellBot;
         }) != robot->upgrades.end())
         {
-            robot->numBullets = 30;
+            robot->setNumBullets(30);
         }
     }
 }

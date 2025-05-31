@@ -57,6 +57,14 @@ int GetRandomNumber(int min, int max) {
     return rand() % (max - min + 1) + min;
 }
 
+int GetRandomNumber(int min, int max, int ignoreNumber) {
+    int randomValue;
+    do {
+        randomValue = GetRandomNumber(min, max);
+    } while (randomValue == ignoreNumber);
+    return randomValue;
+}
+
 Position GetRandomPosition(Position limit) {
     Position pos;
     pos.x = GetRandomNumber(1, limit.x);
