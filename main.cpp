@@ -1,9 +1,26 @@
+/************************************
+file: main.cpp
+Course: Object Oriented Programming & Data Structures
+Trimester: 2530
++-------------------------+------------+---------------------------------------------+----------------+
+|           NAME          |     ID     |                    EMAIL                    | Phone Number   |
++-------------------------+------------+---------------------------------------------+----------------+
+| Mohammad Muazzam Ali    | 242UC244PZ |   mohammad.muazzam.ali@student.mmu.edu.my   |  011-5630 3174 |
+| Bin Mohammad Shoaib Ali |            |                                             |                |
++-------------------------+------------+---------------------------------------------+----------------+
+| Muhammad Aish Qayyim bin| 242UC244BX |   muhammad.aish.qayyim@student.mmu.edu.my   |  012-342 5662  |
+| Mohd Azmi               |            |                                             |                |
++-------------------------+------------+---------------------------------------------+----------------+
+*/
+
 #include <iostream>
 #include <string>
 #include <vector>
 #include <regex>
 #include <fstream>
 #include <streambuf>
+#include <iomanip>
+#include <cmath>
 
 #include "robotsAndManager.h"
 #include "funcs.h"
@@ -23,6 +40,7 @@ void ShootRobot(GenericRobot* robot);
 
 string emptySpace = ".";
 streambuf* originalCoutBuf = cout.rdbuf();
+int mapYSizeDigits;
 
 
 int main()
@@ -32,6 +50,8 @@ int main()
     ofstream outputFile(outputFilename);
     cout.rdbuf(outputFile.rdbuf());
     ReadFromFile(filename);
+    mapYSizeDigits = log10(simulationManager.mapSize.y) + 1;
+
     //* initial print
     for (const auto& robot : simulationManager.robots)
     {
@@ -161,19 +181,19 @@ void DefineRobot(smatch matches)
     //* if it is generic robot, then give random type
     if (robotType == "MovingRobot")
     {
-        robot = new MovingRobot();
+        robot = new MovingRobot(robotName, robotPosition);
     }
     else if (robotType == "ShootingRobot")
     {
-        robot = new ShootingRobot();
+        robot = new ShootingRobot(robotName, robotPosition);
     }
     else if (robotType == "LookingRobot")
     {
-        robot = new LookingRobot();
+        robot = new LookingRobot(robotName, robotPosition);
     }
     else if (robotType == "ThinkingRobot")
     {
-        robot = new ThinkingRobot();
+        robot = new ThinkingRobot(robotName, robotPosition);
     }
     else if (robotType == "GenericRobot") //* if it is generic robot, then give random type
     {
@@ -181,19 +201,16 @@ void DefineRobot(smatch matches)
         switch (randomType)
         {
             case 0:
-                robot = new MovingRobot();
+                robot = new MovingRobot(robotName, robotPosition);
                 break;
             case 1:
-                robot = new ShootingRobot();
+                robot = new ShootingRobot(robotName, robotPosition);
                 break;
             case 2:
-                robot = new LookingRobot();
+                robot = new LookingRobot(robotName, robotPosition);
                 break;
         }
     }
-
-    robot->name = robotName;
-    robot->setPosition(robotPosition);
 
     simulationManager.robots.push_back(unique_ptr<GenericRobot>(robot));
 
@@ -205,8 +222,7 @@ void Simulation()
 {
     for (int i = 0; i < simulationManager.simulationSteps; i++)
     {
-        cout << "\nStep " << i + 1 << endl;
-        PrintMap();
+        cout << "\n!-- STEP " << i + 1 << " --!" << endl;
 
         if (simulationManager.robots.size() == 1)
         {
@@ -214,10 +230,10 @@ void Simulation()
             return;
         }
 
+        //* each robot performs a random action (except thinking robot)
         for (size_t i = 0; i < simulationManager.robots.size(); ++i) 
         {
-            auto& robot = simulationManager.robots[i];
-            
+            auto& robot = simulationManager.robots[i];  
 
             if (robot->isDead()) 
             {
@@ -228,28 +244,40 @@ void Simulation()
                 RandomAction(robot.get());
             }
         }
+        PrintMap();
     }
 }
 #pragma endregion
 #pragma region PrintMap
 void PrintMap()
 {
-    for (int i = 0; i <= simulationManager.mapSize.x; i++)
+    //* print divider line
+    for (int i = 0; i < simulationManager.mapSize.x+mapYSizeDigits+3; i++)
     {
-        cout << "--";
+        if (i < mapYSizeDigits+2)
+            cout << " ";
+        else
+            cout << "--";
     }
     cout << endl;
     for (int i = 0; i < simulationManager.mapSize.x; i++)
     {
-        for (int j = 0; j < simulationManager.mapSize.y; j++)
+        //* print y coordinate
+        cout << setw(mapYSizeDigits) << simulationManager.mapSize.y - i << " | "; //* print y coordinate
+        for (int j = 0; j <= simulationManager.mapSize.y; j++)
         {
+            if (j == simulationManager.mapSize.y)
+            {
+                cout << "| ";
+                continue;
+            }
             bool occupied = false;
             for (const auto& robot : simulationManager.robots)
             {
-                //* print first letter of robot name
-                if (robot->getPosition().x-1 == i && robot->getPosition().y-1 == j)
+                //* print robot's avatar at its position
+                if (10-robot->getPosition().y == i && robot->getPosition().x-1 == j)
                 {
-                    cout << robot->name[0] << " "; 
+                    cout << robot->avatar << " "; 
                     occupied = true;
                     break;
                 }
@@ -262,13 +290,24 @@ void PrintMap()
         }
         cout << endl;
     }
-
-    for (int i = 0; i < simulationManager.mapSize.x; i++)
+    //* print divider line
+    for (int i = 0; i < simulationManager.mapSize.x+mapYSizeDigits+3; i++)
     {
-        cout << "--";
+        if (i < mapYSizeDigits+2)
+            cout << " ";
+        else
+            cout << "--";
     }
     cout << endl;
-    
+    //* print x coordinate
+    for (int i = 0; i < simulationManager.mapSize.x+mapYSizeDigits+3; i++)
+    {
+        if (i < mapYSizeDigits+3)
+            cout << " ";
+        else
+            cout << (i - mapYSizeDigits - 2) % 10 << " ";
+    }
+    cout << endl;    
 }
 #pragma endregion
 
@@ -277,7 +316,11 @@ void RandomAction(GenericRobot* robot)
 {
     //* for hidebot
     if (!robot->getIsVisible())
+    {
         robot->setIsVisible(true);
+        robot->avatar = robot->name[0];
+    }
+        
     
     cout << "(" << robot->getPosition().x << ", " << robot->getPosition().y << "), " << robot->name << " - ";
     
@@ -296,8 +339,7 @@ void RandomAction(GenericRobot* robot)
     if (robot->upgrades.size() > 0)
     {
         upgradeIndex = GetRandomNumber(0, robot->upgrades.size() - 1);
-        maxAction = 3; 
-        return;
+        maxAction = 3;
     }
 
     int action = GetRandomNumber(0, maxAction);

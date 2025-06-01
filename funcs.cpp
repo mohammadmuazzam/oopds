@@ -6,7 +6,11 @@ using namespace std;
 
 float GetDistance(const Position& pos1, const Position& pos2)
 {
-    return sqrt(pow(pos1.x - pos2.x, 2) + pow(pos1.y - pos2.y, 2));
+    float a = pos1.x - pos2.x;
+    float b = pos1.y - pos2.y;
+    //* calculate the Euclidean distance
+    float result = sqrt(a * a + b * b);
+    return result;
 }
 
 Position AbsolutePosition(Position pos1)
@@ -22,10 +26,10 @@ int GetShootDistance(Position currentPosition, Position enemyPosition)
 {
     Position absDistanceVector = AbsolutePosition(currentPosition - enemyPosition);
     int distance = absDistanceVector.x + absDistanceVector.y;
-    return distance;
+    return distance-1;
 }
 
-Position GetClosestPosition(const vector<Position>& positions)
+Position GetClosestPosition(const Position currentPos, const vector<Position>& positions)
 {
     if (positions.empty())
         return Position(-1, -1);
@@ -36,7 +40,7 @@ Position GetClosestPosition(const vector<Position>& positions)
     //* linear search for the closest position
     for (const auto& pos : positions)
     {
-        float distance = GetDistance(closest, pos);
+        float distance = GetDistance(currentPos, pos);
         if (distance < minDistance)
         {
             minDistance = distance;
@@ -114,6 +118,19 @@ Position GetRandomPositionCustom(Position limit, bool ignoreZero) {
     return pos;
 }
 
+Position GetRandomPositionInBounds(Position currentPosition, int range) {
+    Position pos = Position(0, 0);
+    while (pos.x == 0 && pos.y == 0)
+    {
+        pos.x = (currentPosition.x == 1) ? GetRandomNumber(0, range) : 
+            (currentPosition.x == simulationManager.mapSize.x) ? -GetRandomNumber(0, range) : GetRandomNumber(-range, range);
+        pos.y = (currentPosition.y == 1) ? GetRandomNumber(0, range) :
+            (currentPosition.y == simulationManager.mapSize.y) ? -GetRandomNumber(0, range) : GetRandomNumber(-range, range);
+
+    }
+    return pos;
+}
+
 bool IsPositionValidAndUnoccupied(const Position& pos) {
     for (const auto& robot : simulationManager.robots)
     {
@@ -126,8 +143,28 @@ bool IsPositionValidAndUnoccupied(const Position& pos) {
     bool isValidX = (1 <= pos.x && pos.x <= simulationManager.mapSize.x);
     bool isValidY = (1 <= pos.y && pos.y <= simulationManager.mapSize.y);
      
-
     return (isValidX && isValidY);
+}
+
+bool IsPositionValid(const Position& pos) {
+    bool isValidX = (1 <= pos.x && pos.x <= simulationManager.mapSize.x);
+    bool isValidY = (1 <= pos.y && pos.y <= simulationManager.mapSize.y);
+    
+    return (isValidX && isValidY);
+}
+
+vector<Position> GetAllNeighborOffset(Position squareLimit)
+{
+    vector<Position> offsets;
+    for (int i = squareLimit.x; i <= squareLimit.y; i++)
+    {
+        for (int j = squareLimit.x; j <= squareLimit.y; j++)
+        {
+            if (i == 0 && j == 0) continue; // skip the center position
+            offsets.push_back(Position(i, j));
+        }
+    }
+    return offsets;
 }
 
 Position GetNeighborPosition(Position pos, int direction)
@@ -165,4 +202,18 @@ Position GetNeighborPosition(Position pos, int direction)
             break;
     }
     return finalPosition;
+}
+
+vector<Position> GetAllNeighborOffsetExtension(Position pos)
+{
+    vector<Position> offsets;
+    for (int i = -1; i <= 1; i++)
+    {
+        for (int j = -1; j <= 1; j++)
+        {
+            if (i == 0 && j == 0) continue; // skip the center position
+            offsets.push_back(Position(pos.x + i, pos.y + j));
+        }
+    }
+    return offsets;
 }

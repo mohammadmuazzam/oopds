@@ -43,7 +43,7 @@ ostream& operator<<(ostream& os, const UpgradeName& name)
     switch (name)
     {
         case UpgradeName::ScoutBot: os << "ScoutBot"; break;
-        case UpgradeName::TrackingBot: os << "TrackingBot"; break;
+        case UpgradeName::TrackBot: os << "TrackingBot"; break;
         case UpgradeName::SemiAutoBot: os << "SemiAutoBot"; break;
         case UpgradeName::ThirtyShellBot: os << "ThirtyShellBot"; break;
         case UpgradeName::LongShotBot: os << "LongShotBot"; break;
@@ -73,6 +73,7 @@ GenericRobot* SimulationManager::getRobotAtPosition(Position pos)
 void GenericRobot::move(Position moveDistance)
 {
     Position newPosition = position + moveDistance;
+    cout << "trying to move to (" << newPosition.x << ", " << newPosition.y << ")" << endl;
 
     if (!IsPositionValidAndUnoccupied(newPosition))
     {
@@ -81,20 +82,23 @@ void GenericRobot::move(Position moveDistance)
     }
 
     position = newPosition;
-    cout << "moved to (" << position.x << ", " << position.y << ")" << endl;    
+    cout << "\tsuccessfully moved to (" << position.x << ", " << position.y << ")" << endl;    
 }
 
 void GenericRobot::look(Position lookPosition)
 {
     cout << "looked at (" << lookPosition.x + position.x << ", " << lookPosition.y + position.y << ")" << endl;
-    if (IsPositionValidAndUnoccupied(position + lookPosition))
+    
+    for (const auto& robot : simulationManager.robots)
     {
-        enemyPosition = lookPosition;
+        if (robot->getPosition() == position + lookPosition)
+        {
+            enemyPosition = robot->getPosition();
+            return;
+        }
     }
-    else
-    {
-        enemyPosition = Position(-1, -1);
-    }
+    
+    enemyPosition = Position(-1, -1);
 }
 
 void GenericRobot::spawn()
@@ -143,16 +147,15 @@ void GenericRobot::shoot(Position enemyPosition)
     //* shoot at shoot position
     Position shootPosition;
     
-    if (enemyPosition != Position(-1, -1))
+    if (enemyPosition != Position(-1, -1) && GetShootDistance(position, enemyPosition) <= shootRange)
         shootPosition = enemyPosition;
     else
-        shootPosition = GetRandomPositionCustom(Position(-1, 1), Position(-1, 1)) + position;
-    
+        shootPosition = GetRandomPositionCustom(Position(-shootRange, shootRange), Position(-shootRange, shootRange)) + position;
     
     if (simulationManager.getRobotAtPosition(shootPosition) != nullptr)
     {
         GenericRobot* enemyRobot = simulationManager.getRobotAtPosition(shootPosition);
-        cout << "TARGET ACQUIRED: " << enemyRobot->name << endl;
+        cout << "\tTARGET ACQUIRED: " << enemyRobot->name << endl;
         if (ProbabilityCheck(70) && enemyRobot->isVisible)
         {
             cout << "\tHIT " << enemyRobot->getType() << ", " << enemyRobot->name  << endl;
@@ -169,7 +172,7 @@ void GenericRobot::shoot(Position enemyPosition)
     }
     else
     {
-        cout << "NO ROBOT (" << shootPosition.x << ", " << shootPosition.y << ")" << endl;
+        cout << "\tNO ROBOT (" << shootPosition.x << ", " << shootPosition.y << ")" << endl;
     }
 
     numBullets--;
@@ -177,7 +180,7 @@ void GenericRobot::shoot(Position enemyPosition)
     // check if out of bullets
     if (numBullets <= 0)
     {
-        cout << getType() << "-" << name << " ran out of bullets" << endl;
+        cout << "\t" << getType() << "-" << name << " ran out of bullets" << endl;
         die();
     }
 }
@@ -197,13 +200,14 @@ void GenericRobot::upgradeRandom()
 
     for (const auto& upgrade : upgrades)
     {
-        cout << "\tAlready applied upgrade: " << upgrade->getUpgradeName() << "(" << upgrade->getUpgradeType() << ")" << endl;
+        //#cout << "\tAlready applied upgrade: " << upgrade->getUpgradeName() << "(" << upgrade->getUpgradeType() << ")" << endl;
         appliedUpgrades.push_back(upgrade->getUpgradeType());
         availableUpgrades.erase(remove(availableUpgrades.begin(), 
                                 availableUpgrades.end(), 
                                 upgrade->getUpgradeType()), 
                                 availableUpgrades.end());
     }
+
     
     //* for slightly faster simulation
     if (upgrades.size() == 1) //* get random upgrade ignoring the applied upgrade
@@ -212,6 +216,7 @@ void GenericRobot::upgradeRandom()
         upgradeArea = static_cast<int>(availableUpgrades[0]); //* only one upgrade left to apply
     else //* if no upgrade yet
         upgradeArea = GetRandomNumber(0, 2);
+        
 
     int randomUpgradeName;
 
@@ -268,6 +273,17 @@ void GenericRobot::upgradeRandom()
     }
 }
 
+GenericRobot::GenericRobot(string robotName, Position robotPos)
+{
+    name = robotName;
+    avatar = robotName[0];
+    position = robotPos;
+}
+
+GenericRobot::GenericRobot()
+{
+    
+}
 
 GenericRobot::~GenericRobot()
 {
@@ -283,6 +299,13 @@ MovingRobot::MovingRobot()
     moveSteps = 2; 
 }
 
+MovingRobot::MovingRobot(string robotName, Position robotPos)
+            : GenericRobot(robotName, robotPos)
+{
+    type = RobotType::MovingRobot;
+    moveSteps = 2; 
+}
+
 #pragma endregion 
 
 #pragma region ShootingRobot
@@ -293,11 +316,25 @@ ShootingRobot::ShootingRobot()
     numBullets = 15; 
 };
 
+ShootingRobot::ShootingRobot(string robotName, Position robotPos)
+            : GenericRobot(robotName, robotPos)
+{
+    type = RobotType::ShootingRobot;
+    numBullets = 15; 
+}
+
 #pragma endregion
 
 #pragma region LookingRobot
 
 LookingRobot::LookingRobot()
+{
+    type = RobotType::LookingRobot;
+    lookRange = 2; 
+}
+
+LookingRobot::LookingRobot(string robotName, Position robotPos)
+            : GenericRobot(robotName, robotPos)
 {
     type = RobotType::LookingRobot;
     lookRange = 2; 
@@ -311,8 +348,28 @@ ThinkingRobot::ThinkingRobot()
     type = RobotType::ThinkingRobot;
 }
 
+ThinkingRobot::ThinkingRobot(string robotName, Position robotPos)
+            : GenericRobot(robotName, robotPos)
+{
+    type = RobotType::ThinkingRobot;
+}
+
 void ThinkingRobot::think()
 {
+    //** immediately activate longshotbot or thirtyshellbot if available
+    if (!shootingUpgradeActivated)
+    {
+        for (const auto &upgrade : upgrades)
+        {
+            if (upgrade->getUpgradeName() == UpgradeName::LongShotBot || 
+                upgrade->getUpgradeName() == UpgradeName::ThirtyShellBot)
+            {
+                upgrade->upgradedAbility();
+                shootingUpgradeActivated = true;
+            }
+        } 
+    }    
+
     if (lookLimit == 0)
     {
         lookLimit = GetRandomNumber(1, 3);
@@ -322,65 +379,81 @@ void ThinkingRobot::think()
     if (lastEnemyPositions.empty() && lookCount <= lookLimit)
     {
         cout << "\t... No known enemy positions. Looking around." << endl;
-        look(GetRandomPositionCustom(Position(-lookRange, lookRange)));
+
+        //* generate random look direction based on current position that is in bounds
+        Position lookDirection = GetRandomPositionInBounds(position, lookRange);
+        
+        look(lookDirection);
         if (lastEnemyPositions.empty())
         {
             cout << "\t... No enemy found in sight." << endl;
         }
-        else
-        {
-            cout << "\t... Found enemy positions: ";
-            for (const auto& pos : lastEnemyPositions)
-            {
-                cout << "(" << pos.x << ", " << pos.y << ") ";
-            }
-            cout << endl;
-        }
         return;
+    }
+    
+    //* shoot randomly 10% of the time
+    if (ProbabilityCheck(10) && numBullets > 3)
+    {
+        cout << "\t... Shooting at random position." << endl;
+        Position randomShootPosition = GetRandomPositionCustom(Position(-shootRange, shootRange), Position(-shootRange, shootRange)) + position;
+        shoot(randomShootPosition);
     }
 
     //* if lookCount exceeds a random number and still no data about enemy, then move randomly
     if (lookCount > lookLimit && lastEnemyPositions.empty())
     {
-        lookCount = 0; // reset look count
-        lookLimit = 0; // reset look limit1
-        cout << "\t... Moving randomly.\n\t";
-        move(GetRandomPositionCustom(Position(-moveSteps, moveSteps)));
+        lookCount = 0;
+        lookLimit = 0; 
+        cout << "\t... Moving randomly." << endl;
+        Position movePos = GetRandomPositionInBounds(position, moveSteps);
+        move(movePos);
         return;
     }
 
-    //* if last enemy position isn't in shooting range, then move towards closest known enemy position
+    //* if last enemy position isn't in shooting range, 
+    //* then move towards closest known enemy position
     if (!lastEnemyPositions.empty())
     {
-        Position closestEnemyPosition = GetClosestPosition(lastEnemyPositions);
+        Position closestEnemyPosition = GetClosestPosition(position, lastEnemyPositions);
         if (GetShootDistance(position, closestEnemyPosition) > shootRange)
         {
+            cout << "\t... " << GetShootDistance(position, closestEnemyPosition) << " >? " << shootRange << endl;
             Position movePosition = closestEnemyPosition - position;
-            if (movePosition.x > moveSteps) movePosition.x = moveSteps;
-            if (movePosition.y > moveSteps) movePosition.y = moveSteps;
-            cout << "\t... Moving towards last known enemy position\n\t";
+            //##cout << "\t... vector to closest enemy position: " << movePosition << endl;
+            if (abs(movePosition.x) > moveSteps) movePosition.x = movePosition.x > 0 ? moveSteps : -moveSteps;
+            if (movePosition.y > moveSteps) movePosition.y = movePosition.y > 0 ? moveSteps : -moveSteps;
+            cout << "\t... Moving towards last known enemy position - " << closestEnemyPosition << "\n";
+            //#cout << "\t... Valid moving vector: " << movePosition << endl;
             move(movePosition);
             return;
         }
         else
         {
-            cout << "\t... In range with last known enemy position. Shooting." << endl;
-            shoot(closestEnemyPosition);
-            //* remove the closest enemy position from the list
-            lastEnemyPositions.erase(remove(lastEnemyPositions.begin(), lastEnemyPositions.end(), closestEnemyPosition), lastEnemyPositions.end());
+            //* either shoot or hide (50% chance)
+            bool canHide = false;
+            for (const auto &upgrade : upgrades)
+            {
+                if (upgrade->getUpgradeName() == UpgradeName::HideBot && rand() % 2 == 0)
+                {
+                    upgrade->upgradedAbility();
+                    canHide = true;
+                }
+            }
+
+            if (!canHide)
+            {
+                cout << "\t... In range with last known enemy position. Shooting." << endl;
+                shoot(closestEnemyPosition);
+                //* remove the closest enemy position from the list
+                lastEnemyPositions.erase(remove(lastEnemyPositions.begin(), lastEnemyPositions.end(), closestEnemyPosition), lastEnemyPositions.end());    
+            }
             return;
         }
     }
 
-
-
-    //* if saw enemy, then shoot at that position
-    
-
-    //* 
 }
 
-void ThinkingRobot::look(Position lookPosition)
+void ThinkingRobot::look(Position lookDirection)
 {
     lookCount++;
 
@@ -389,11 +462,11 @@ void ThinkingRobot::look(Position lookPosition)
     {
         if (upgrade->getUpgradeName() == UpgradeName::ScoutBot)
         {
-            cout << "ScoutBot ability activated. Looking at the entire map." << endl;
+            cout << "\tScoutBot ability activated. Looking at the entire map.\n\t";
             upgrade->upgradedAbility();
             
             ScoutRobot* scout = dynamic_cast<ScoutRobot*>(upgrade.get());
-            if (scout && !scout->abilityUsed)
+            if (scout)
             {
                 lastEnemyPositions = scout->enemyPositions;
             }
@@ -403,16 +476,119 @@ void ThinkingRobot::look(Position lookPosition)
             }
             return;
         }
+        //* if no scoutbot upgrade, then use trackbot.
+        //* if no tracked robot, add one. else, get tracked positions.
+        else if (upgrade->getUpgradeName() == UpgradeName::TrackBot)
+        {
+            cout << "\tTrackBot ability activated. Tracking enemies." << endl;
+            TrackRobot* track = dynamic_cast<TrackRobot*>(upgrade.get());
+            if (track)
+            {
+                if (track->getTrackedPositions().empty())
+                {
+                    cout << "\tNo enemies currently being tracked. Adding tracker." << endl;
+                    track->addTracker();
+                }                
+
+                if (!track->getTrackedPositions().empty())
+                    lastEnemyPositions = track->getTrackedPositions();
+            }
+            else
+            {
+                cout << "Error: TrackRobot upgrade is not of type TrackRobot." << endl;
+            }
+            return;
+        }
     }
-    cout << "\t... ";
-    GenericRobot::look(lookPosition);
+
+    //* if no scoutbot or trackbot upgrade, then look in the specified direction
+    cout << "\t";
+    GenericRobot::look(lookDirection);
     
     if (enemyPosition != Position(-1, -1))
     {
-        cout << "\t...Enemy found at (" << enemyPosition.x + position.x << ", " << enemyPosition.y + position.y << ")" << endl;
+        cout << "\tEnemy found at (" << enemyPosition.x << ", " << enemyPosition.y << ")" << endl;
         lastEnemyPositions.push_back(enemyPosition);
     }
 }
+
+void ThinkingRobot::move(Position moveDistance)
+{
+    cout << "\t... ";
+
+    //* use jumpbot ability if available
+    for (const auto& upgrade : upgrades)
+    {
+        if (upgrade->getUpgradeName() == UpgradeName::JumpBot)
+        {
+            JumpBot* jumpBot = dynamic_cast<JumpBot*>(upgrade.get());
+            //* find valid neighboring positions near enemy to jump to
+            if (!lastEnemyPositions.empty())
+            {
+                vector<Position> neighboringEnemyPositions = GetAllNeighborOffsetExtension(GetClosestPosition(this->position, lastEnemyPositions));
+                vector<Position> validNeighboringEnemyPositions;
+                cout << "JumpBot ability: checking neighboring enemy positions." << endl;
+                for (const auto& pos : neighboringEnemyPositions)
+                {
+                    if (IsPositionValidAndUnoccupied(pos))
+                    {
+                        validNeighboringEnemyPositions.push_back(pos);
+                        cout << "\t\t" << pos << " is valid" << endl;
+                    }
+                    else
+                        cout << "\t\t" << pos << " is invalid" << endl;
+                }
+
+                if (validNeighboringEnemyPositions.empty())
+                {
+                    cout << "\tNo valid neighboring enemy positions to jump to. Jumping to random position." << endl;
+                    jumpBot->jumpPosition = Position(-1, -1);
+                }
+                else
+                {
+                    Position jumpPosition = validNeighboringEnemyPositions[GetRandomNumber(0, validNeighboringEnemyPositions.size() - 1)];
+                    cout << "\tJumping to a random neighboring position: " << jumpPosition << endl;
+                    jumpBot->jumpPosition = jumpPosition;
+                }
+            }
+            cout << "\tJumpBot ability activated. Jumping to a random position.\n\t";
+            upgrade->upgradedAbility();
+            return;
+        }
+    }
+
+    GenericRobot::move(moveDistance);
+
+    //* check if the move was successful
+    //* if not, maybe there's an enemy there
+    if (position == moveDistance + position)
+    {
+        lastEnemyPositions.push_back(moveDistance + position);
+    }
+    
+}
+
+void ThinkingRobot::shoot(Position enemyPosition)
+{
+    cout << "\t... ";
+    //! HERE
+    //* if semi auto bot upgrade is available, use it 50% of the time
+    if (numBullets > 4 && ProbabilityCheck(50))
+    {
+        for (const auto& upgrade : upgrades)
+        {
+            if (upgrade->getUpgradeName() == UpgradeName::SemiAutoBot)
+            {
+                SemiAutoBot* semiAutoBot = dynamic_cast<SemiAutoBot*>(upgrade.get());
+                semiAutoBot->upgradedAbility();
+                return;
+            }
+        }
+    }
+    else
+        GenericRobot::shoot(enemyPosition);
+}
+
 #pragma endregion
 
 
@@ -422,8 +598,15 @@ SimulationManager simulationManager;
 
 void LongShotBot::upgradedAbility()
 {
-    cout << "LongShotBot ability activated: Can shoot targets where x + y <= 3." << endl;
-
+    if (abilityUsed)
+    {
+        cout << "\tLongShotBot ability already used." << endl;
+        return;
+    }
+    cout << "\tLongShotBot ability activated: Can shoot targets where x + y <= 3." << endl;
+    robot->setShootRange(3);
+    abilityUsed = true;
+    /* 
     for (auto& robot : simulationManager.robots)
     {
         if (find_if(robot->upgrades.begin(), robot->upgrades.end(), [](const unique_ptr<UpgradeRobot>& upgrade) {
@@ -433,60 +616,64 @@ void LongShotBot::upgradedAbility()
             robot->shootRange = 3;
         }
     }
+    */
 }
 
 void SemiAutoBot::upgradedAbility()
 {
-    cout << "SemiAutoBot ability activated: Fires 3 rapid shells at one location, each with 70% chance to hit." << endl;
-
-    for (auto& robot : simulationManager.robots)
+    
+    Position target = robot->enemyPosition;
+    if (target == Position(-1, -1))
     {
-        if (find_if(robot->upgrades.begin(), robot->upgrades.end(), [](const unique_ptr<UpgradeRobot>& upgrade) {
-            return upgrade->getUpgradeName() == UpgradeName::SemiAutoBot;
-        }) != robot->upgrades.end())
+        target = GetRandomPositionCustom(Position(-robot->getShootRange(), robot->getShootRange()), Position(-robot->getShootRange(), robot->getShootRange())) + robot->getPosition();
+    }
+
+    cout << "SemiAutoBot ability activated. Shooting at " << target << endl;
+
+    GenericRobot* targetRobot = simulationManager.getRobotAtPosition(target);
+    if (targetRobot != nullptr)
+    {
+        for (int i = 0; i < 3; ++i)
         {
-            Position target = robot->enemyPosition;
-
-            if (target != Position(-1, -1))
+            cout << "\t\tATTEMPT " << i + 1 << " at " << target << endl;
+            if (ProbabilityCheck(70))
             {
-                GenericRobot* targetRobot = simulationManager.getRobotAtPosition(target + robot->getPosition());
-                if (targetRobot != nullptr)
-                {
-                    for (int i = 0; i < 3; ++i)
-                    {
-                        if (ProbabilityCheck(70))
-                        {
-                            cout << "SEMI-AUTO HIT " << targetRobot->getType() << ", " << targetRobot->name << endl;
-                            targetRobot->die();
-
-                            if (targetRobot->isDead()) break;
-                        }
-                        else
-                        {
-                            cout << "SEMI-AUTO MISS " << targetRobot->getType() << ", " << targetRobot->name << endl;
-                        }
-                    }
-                }
-                else
-                {
-                    cout << "SEMI-AUTO NO TARGET at (" << target.x + robot->getPosition().x << ", " << target.y + robot->getPosition().y << ")" << endl;
-                }
-
-                robot->setNumBullets(robot->getNumBullets() - 1);
-                if (robot->getNumBullets() <= 0)
-                {
-                    cout << robot->getType() << "-" << robot->name << " ran out of bullets" << endl;
-                    robot->die();
-                }
+                cout << "\tSEMI-AUTO HIT " << targetRobot->getType() << ", " << targetRobot->name << endl;
+                targetRobot->die();
+                robot->upgradeRandom();
+                break;
+            }
+            else
+            {
+                cout << "\tSEMI-AUTO MISS " << targetRobot->getType() << ", " << targetRobot->name << endl;
             }
         }
     }
+    else
+    {
+        cout << "\tSEMI-AUTO NO TARGET at " << target << endl;
+    }
+
+    robot->setNumBullets(robot->getNumBullets() - 3);
+    if (robot->getNumBullets() <= 0)
+    {
+        cout << "\t" << robot->getType() << "-" << robot->name << " ran out of bullets" << endl;
+        robot->die();
+    }
 }
+
 
 void ThirtyShellBot::upgradedAbility()
 {
-    cout << "ThirtyShellBot ability activated: Ammo reloaded to 30 shells." << endl;
+    if (abilityUsed) {
+        cout << "\tThirtyShellBot ability already used." << endl;
+        return;
+    }
+    cout << "\tThirtyShellBot ability activated: Ammo reloaded to 30 shells." << endl;
+    robot->setNumBullets(30);
+    abilityUsed = true;
 
+    /*
     for (auto& robot : simulationManager.robots)
     {
         if (find_if(robot->upgrades.begin(), robot->upgrades.end(), [](const unique_ptr<UpgradeRobot>& upgrade) {
@@ -496,11 +683,13 @@ void ThirtyShellBot::upgradedAbility()
             robot->setNumBullets(30);
         }
     }
+    */
 }
 #pragma endregion
 
 #pragma region Looking Upgrades
-void ScoutRobot::upgradedAbility() {
+void ScoutRobot::upgradedAbility() 
+{
     if (abilityUsed) {
         cout << "Ability already used." << endl;
         return;
@@ -511,31 +700,67 @@ void ScoutRobot::upgradedAbility() {
     enemyPositions.clear();
 
     //Loop through all robots in the simulation
-    for (const auto& r : simulationManager.robots) {
-        if (r.get() != robot && !r->isDead()) {
+    for (const auto& r : simulationManager.robots) 
+    {
+        if (r.get() != robot && !r->isDead()) 
+        {
             Position enemyPos = r->getPosition();
             enemyPositions.push_back(enemyPos);
+
             cout << "\tEnemy: " << r->name << " at (" << enemyPos.x << ", " << enemyPos.y << ")" << endl;
         }
     }
-
+    //* for non-thinking robots, set enemy position to closest enemy
+    if (robot->getType() != RobotType::ThinkingRobot && !enemyPositions.empty()) 
+    {
+        Position closestEnemy = GetClosestPosition(robot->getPosition(), enemyPositions);
+        robot->enemyPosition = closestEnemy;
+        cout << "\tClosest enemy position set to: " << closestEnemy << endl;
+    }
     abilityUsed = true;
 }
 
-void TrackRobot::upgradedAbility() {
-    if (trackersRemaining <= 0) {
-        cout << "No more trackers available." << endl;
+void TrackRobot::upgradedAbility() //* for non-thinking robots
+{
+    //* 50% chance to add a tracker or get data from tracker (for non thinking  robot)
+    if (ProbabilityCheck(50)) 
+    {
+        addTracker();
+    } 
+    else 
+    {
+        cout << "\tTrackBot ability: Retrieving tracked enemy positions..." << endl;
+        vector<Position> trackedPositions = getTrackedPositions();
+        if (trackedPositions.empty()) 
+        {
+            cout << "\t\tNo enemies currently being tracked." << endl;
+        } 
+        else 
+        {
+            cout << "\t\tCurrently tracked enemy positions:" << endl;
+            for (const auto& pos : trackedPositions) 
+            {
+                cout << "\t\t" << pos << endl;
+            }
+            Position closestEnemy = GetClosestPosition(robot->getPosition(), trackedPositions);
+            robot->enemyPosition = closestEnemy;
+        }
+    }
+}
+
+void TrackRobot::addTracker()
+{
+    if (trackersRemaining <= 0) 
+    {
+        cout << "\tTrackBot ability: No more trackers available." << endl;
         return;
     }
 
-    cout << "[TrackBot] Scanning nearby for enemies..." << endl;
+    cout << "\tTrackBot ability: Scanning nearby for enemies..." << endl;
 
     //Allow the robot to check surrounding
-    vector<Position> offsets = {
-        {-1, -1}, {-1, 0}, {-1, 1},
-        {0, -1},           {0, 1},
-        {1, -1}, {1, 0}, {1, 1}
-    };
+    vector<Position> offsets = GetAllNeighborOffset(Position(-robot->getLookRange(), robot->getLookRange()));
+    
 
     for (const auto& offset : offsets) {
         Position checkPos = robot->getPosition() + offset;
@@ -545,13 +770,13 @@ void TrackRobot::upgradedAbility() {
             if (std::find(trackedRobots.begin(), trackedRobots.end(), target) == trackedRobots.end()) {
                 trackedRobots.push_back(target);
                 trackersRemaining--;
-                cout << "[TrackBot] Tracker placed on: " << target->name << endl;
+                cout << "\tTrackBot ability: Tracker placed on: " << target->name << endl;
                 return;
             }
         }
     }
 
-    cout << "[TrackBot] No valid nearby enemy to track." << endl;
+    cout << "\tTrackBot ability: No valid nearby enemy to track." << endl;
 }
 
 //Return the live position of all currently tracked enemy robots
@@ -576,6 +801,7 @@ void HideBot::upgradedAbility()
     {
         cout << "HideBot ability activated: Robot is now hidden and cannot be hit." << endl;
         robot->setIsVisible(false);
+        robot->avatar = '-';
         hideCount--;
     }
     else

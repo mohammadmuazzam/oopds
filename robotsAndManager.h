@@ -47,15 +47,15 @@ enum class RobotType
 enum class UpgradeType
 {
     MovingUpgrade = 0,
-    ShootingUpgrade = 1,
-    LookingUpgrade = 2,
+    LookingUpgrade = 1,
+    ShootingUpgrade = 2    
 };
 
 enum class UpgradeName
 {
     //* looking upgrades
     ScoutBot,
-    TrackingBot,
+    TrackBot,
     //* Shooting Upgrades
     SemiAutoBot,
     ThirtyShellBot,
@@ -87,6 +87,7 @@ class GenericRobot
         int lookRange = 1;
         int shootRange = 1;
         string name;
+        char avatar;
         Position enemyPosition;
         vector<unique_ptr<UpgradeRobot>> upgrades;
         
@@ -101,6 +102,7 @@ class GenericRobot
         void setPosition(Position newPosition) { position = newPosition; };
         void setNumBullets(int bullets) { numBullets = bullets; };
         void setIsVisible(bool visible) { isVisible = visible; }
+        void setShootRange(int range) { shootRange = range; }
 
         Position getPosition() const { return position; }
         RobotType getType() const { return type; }
@@ -113,6 +115,8 @@ class GenericRobot
 
         bool isDead() const { return health <= 0; }
 
+        GenericRobot();
+        GenericRobot(string robotName, Position robotPos);
         virtual ~GenericRobot();
 };
 #pragma endregion
@@ -122,12 +126,14 @@ class MovingRobot : public GenericRobot
 {
     public:
         MovingRobot();
+        MovingRobot(string robotName, Position robotPos);
 };
 
 class ShootingRobot : public GenericRobot
 {
     public:
         ShootingRobot();
+        ShootingRobot(string robotName, Position robotPos);
         //#void shoot(Position enemyPosition) override;
 };
 
@@ -135,6 +141,7 @@ class LookingRobot : public GenericRobot
 {
     public:
         LookingRobot();
+        LookingRobot(string robotName, Position robotPos);
         //#void look(Position lookPosition) override;
 };
 
@@ -144,13 +151,15 @@ class ThinkingRobot : public GenericRobot
         vector<Position> lastEnemyPositions;
         int lookCount = 0;
         int lookLimit = 0;
-        
-        //* if saw enemy, then shoot at that position
-        //* if not, then think about shooting at random position
+        bool shootingUpgradeActivated = false; // if longshotbot or thirtyshellbot is activated
+
     public:
         ThinkingRobot();
+        ThinkingRobot(string robotName, Position robotPos);
         void think();
         void look(Position lookPosition) override;
+        void move(Position movePosition) override;
+        void shoot(Position enemyPosition) override;
         
 };
 #pragma endregion
@@ -212,11 +221,12 @@ class TrackRobot : public UpgradeRobot
         TrackRobot(GenericRobot* owner) { robot = owner; }
         TrackRobot() = default;
 
-        UpgradeName getUpgradeName() override { return UpgradeName::TrackingBot; }
+        UpgradeName getUpgradeName() override { return UpgradeName::TrackBot; }
         UpgradeType getUpgradeType() override { return UpgradeType::LookingUpgrade; }
 
         void upgradedAbility() override;
         vector<Position> getTrackedPositions() const;
+        void addTracker();
 };
 #pragma endregion
 #pragma region shooting upgrades
@@ -233,6 +243,8 @@ class SemiAutoBot : public UpgradeRobot
 class ThirtyShellBot : public UpgradeRobot
 {
     public:
+        bool abilityUsed = false;
+
         ThirtyShellBot(GenericRobot* owner) { robot = owner; }
         ThirtyShellBot() = default;
         UpgradeName getUpgradeName() override { return UpgradeName::ThirtyShellBot; }
@@ -244,6 +256,8 @@ class ThirtyShellBot : public UpgradeRobot
 class LongShotBot : public UpgradeRobot
 {
     public:
+        bool abilityUsed = false;
+
         LongShotBot(GenericRobot* owner) { robot = owner; }
         LongShotBot() = default;
         UpgradeName getUpgradeName() override { return UpgradeName::LongShotBot; }
@@ -270,9 +284,10 @@ class JumpBot : public UpgradeRobot
 {
     private:
         int jumpCount = 3; // can jump 3 times per match
-        Position jumpPosition = Position(-1, -1); // position to jump to
+        
 
     public:
+        Position jumpPosition = Position(-1, -1); // position to jump to
         JumpBot(GenericRobot* owner) { robot = owner; }
         JumpBot() = default;
         UpgradeName getUpgradeName() override { return UpgradeName::JumpBot; }
