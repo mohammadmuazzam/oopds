@@ -1,3 +1,23 @@
+/*
+file: funcs.cpp
+Course: Object Oriented Programming & Data Structures
+Trimester: 2510
++===========================+============+=============================================+================+
+|           NAME            |     ID     |                    EMAIL                    | Phone Number   |
++===========================+============+=============================================+================+
+| Mohammad Muazzam Ali      | 242UC244PZ |   mohammad.muazzam.ali@student.mmu.edu.my   |  011-5630 3174 |
+| Bin Mohammad Shoaib Ali   |            |                                             |                |
++---------------------------+------------+---------------------------------------------+----------------+
+| Muhammad Aish Qayyim bin  | 242UC244BX |   muhammad.aish.qayyim@student.mmu.edu.my   |  012-342 5662  |
+| Mohd Azmi                 |            |                                             |                |
++---------------------------+------------+---------------------------------------------+----------------+
+| Muhammad Aref bin Mohd    | 242UC244Q1 |    muhammad.aref.mohd@student.mmu.edu.my    |  010-650 9597  |
+| Hasni                     |            |                                             |                |
++---------------------------+------------+---------------------------------------------+----------------+
+| Muhammad Fahmi bin Hanafi | 242UC244FX |   muhammad.fahmi.hanafi@student.mmu.edu.my  + 011-3174 3545  |
++===========================+============+=============================================+================+
+*/
+
 #include "funcs.h"
 #include <cmath>
 #include <iostream>

@@ -1,19 +1,21 @@
-/************************************
+/*
 file: main.cpp
 Course: Object Oriented Programming & Data Structures
 Trimester: 2510
-+=========================+============+=============================================+================+
-|           NAME          |     ID     |                    EMAIL                    | Phone Number   |
-+=========================+============+=============================================+================+
-| Mohammad Muazzam Ali    | 242UC244PZ |   mohammad.muazzam.ali@student.mmu.edu.my   |  011-5630 3174 |
-| Bin Mohammad Shoaib Ali |            |                                             |                |
-+-------------------------+------------+---------------------------------------------+----------------+
-| Muhammad Aish Qayyim bin| 242UC244BX |   muhammad.aish.qayyim@student.mmu.edu.my   |  012-342 5662  |
-| Mohd Azmi               |            |                                             |                |
-+-------------------------+------------+---------------------------------------------+----------------+
-|Muhammad Aref bin Hasni  | 242UC244Q1 |    muhammad.aref.mohd@student.mmu.edu.my    |  010-650 9597  |
-+-------------------------+------------+---------------------------------------------+----------------+
-|
++===========================+============+=============================================+================+
+|           NAME            |     ID     |                    EMAIL                    | Phone Number   |
++===========================+============+=============================================+================+
+| Mohammad Muazzam Ali      | 242UC244PZ |   mohammad.muazzam.ali@student.mmu.edu.my   |  011-5630 3174 |
+| Bin Mohammad Shoaib Ali   |            |                                             |                |
++---------------------------+------------+---------------------------------------------+----------------+
+| Muhammad Aish Qayyim bin  | 242UC244BX |   muhammad.aish.qayyim@student.mmu.edu.my   |  012-342 5662  |
+| Mohd Azmi                 |            |                                             |                |
++---------------------------+------------+---------------------------------------------+----------------+
+| Muhammad Aref bin Mohd    | 242UC244Q1 |    muhammad.aref.mohd@student.mmu.edu.my    |  010-650 9597  |
+| Hasni                     |            |                                             |                |
++---------------------------+------------+---------------------------------------------+----------------+
+| Muhammad Fahmi bin Hanafi | 242UC244FX |   muhammad.fahmi.hanafi@student.mmu.edu.my  + 011-3174 3545  |
++===========================+============+=============================================+================+
 */
 
 #include <iostream>
@@ -66,6 +68,7 @@ int main()
     mapYSizeDigits = log10(simulationManager.mapSize.y) + 1;
     
     CalculateRandomSpawnSteps();
+    //#cout << "Map Size: " << simulationManager.mapSize.x << " by " << simulationManager.mapSize.y << endl;
 
     //* initial print
     for (const auto& robot : simulationManager.robots)
@@ -289,13 +292,13 @@ void PrintMap()
             cout << "--";
     }
     cout << endl;
-    for (int i = 0; i < simulationManager.mapSize.x; i++)
+    for (int i = 0; i < simulationManager.mapSize.y; i++)
     {
         //* print y coordinate
         cout << setw(mapYSizeDigits) << simulationManager.mapSize.y - i << " | "; //* print y coordinate
-        for (int j = 0; j <= simulationManager.mapSize.y; j++)
+        for (int j = 0; j <= simulationManager.mapSize.x; j++)
         {
-            if (j == simulationManager.mapSize.y)
+            if (j == simulationManager.mapSize.x)
             {
                 cout << "| ";
                 continue;
@@ -304,7 +307,7 @@ void PrintMap()
             for (const auto& robot : simulationManager.robots)
             {
                 //* print robot's avatar at its position
-                if (10-robot->getPosition().y == i && robot->getPosition().x-1 == j)
+                if (simulationManager.mapSize.y-robot->getPosition().y == i && robot->getPosition().x-1 == j)
                 {
                     cout << robot->avatar << " "; 
                     occupied = true;
