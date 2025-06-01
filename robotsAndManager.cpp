@@ -200,7 +200,7 @@ void GenericRobot::upgradeRandom()
 
     for (const auto& upgrade : upgrades)
     {
-        //#cout << "\tAlready applied upgrade: " << upgrade->getUpgradeName() << "(" << upgrade->getUpgradeType() << ")" << endl;
+        //# cout << "\tAlready applied upgrade: " << upgrade->getUpgradeName() << "(" << upgrade->getUpgradeType() << ")" << endl;
         appliedUpgrades.push_back(upgrade->getUpgradeType());
         availableUpgrades.erase(remove(availableUpgrades.begin(), 
                                 availableUpgrades.end(), 
