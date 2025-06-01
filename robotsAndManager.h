@@ -111,13 +111,14 @@ class GenericRobot
         Position enemyPosition;
         vector<unique_ptr<UpgradeRobot>> upgrades;
         
-        void upgradeRandom();
 
         virtual void look(Position lookPosition);
         virtual void move(Position movePosition);
         virtual void shoot(Position enemyPosition);
-        virtual void die();
+        void die();
+
         void spawn();
+        void upgradeRandom();
 
         void setPosition(Position newPosition) { position = newPosition; };
         void setNumBullets(int bullets) { numBullets = bullets; };
@@ -189,7 +190,7 @@ class SimulationManager
 {
     private:
         int simulationTime;
-                
+
     public:
         int simulationSteps;
         int numRobots;
@@ -288,15 +289,15 @@ class LongShotBot : public UpgradeRobot
 #pragma region moving upgrades
 class HideBot : public UpgradeRobot
 {
-private:
-    int hideCount = 3; // can hide 3 times per match
+    private:
+        int hideCount = 3; // can hide 3 times per match
 
-public:
-    HideBot(GenericRobot* owner) { robot = owner; }
-    HideBot() = default;
-    UpgradeName getUpgradeName() override { return UpgradeName::HideBot; }
-    UpgradeType getUpgradeType() override { return UpgradeType::MovingUpgrade; }
-    void upgradedAbility() override;
+    public:
+        HideBot(GenericRobot* owner) { robot = owner; }
+        HideBot() = default;
+        UpgradeName getUpgradeName() override { return UpgradeName::HideBot; }
+        UpgradeType getUpgradeType() override { return UpgradeType::MovingUpgrade; }
+        void upgradedAbility() override;
 };
 
 

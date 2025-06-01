@@ -59,8 +59,8 @@ void CalculateRandomSpawnSteps()
 
 int main()
 {
-    string filename = "input.txt";
-    string outputFilename = "output.txt";
+    string filename = "input3.txt";
+    string outputFilename = "output3.txt";
     ofstream outputFile(outputFilename);
     
     cout.rdbuf(outputFile.rdbuf());

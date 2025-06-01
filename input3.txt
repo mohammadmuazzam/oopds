@@ -1,0 +1,11 @@
+M by N : 11 21
+steps: 600
+robots: 8
+GenericRobot Test 8 17
+ThinkingRobot Oppa 6 14
+ShootingRobot Byte 10 6
+LookingRobot Noob random random
+MovingRobot Amad random 2
+ThinkingRobot Honey random random
+ThinkingRobot Master random random
+MovingRobot Gerakan 7 2
