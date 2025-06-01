@@ -146,16 +146,18 @@ void GenericRobot::shoot(Position enemyPosition)
 {
     //* shoot at shoot position
     Position shootPosition;
+
+    if (enemyPosition == position || enemyPosition == Position(-1, -1) || GetShootDistance(position, enemyPosition) <= shootRange)
+    {
+        enemyPosition = position + GetRandomPositionCustom(Position(-shootRange, shootRange), Position(-shootRange, shootRange), true);
+    }
     
-    if (enemyPosition != Position(-1, -1) && GetShootDistance(position, enemyPosition) <= shootRange)
-        shootPosition = enemyPosition;
-    else
-        shootPosition = GetRandomPositionCustom(Position(-shootRange, shootRange), Position(-shootRange, shootRange)) + position;
-    
+    shootPosition = enemyPosition;
+
     if (simulationManager.getRobotAtPosition(shootPosition) != nullptr)
     {
         GenericRobot* enemyRobot = simulationManager.getRobotAtPosition(shootPosition);
-        cout << "\tTARGET ACQUIRED: " << enemyRobot->name << endl;
+        cout << "\tTARGET ACQUIRED: " << enemyRobot->name << " at " << shootPosition << endl;
         if (ProbabilityCheck(70) && enemyRobot->isVisible)
         {
             cout << "\tHIT " << enemyRobot->getType() << ", " << enemyRobot->name  << endl;

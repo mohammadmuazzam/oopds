@@ -1,16 +1,19 @@
 /************************************
 file: main.cpp
 Course: Object Oriented Programming & Data Structures
-Trimester: 2530
-+-------------------------+------------+---------------------------------------------+----------------+
+Trimester: 2510
++=========================+============+=============================================+================+
 |           NAME          |     ID     |                    EMAIL                    | Phone Number   |
-+-------------------------+------------+---------------------------------------------+----------------+
++=========================+============+=============================================+================+
 | Mohammad Muazzam Ali    | 242UC244PZ |   mohammad.muazzam.ali@student.mmu.edu.my   |  011-5630 3174 |
 | Bin Mohammad Shoaib Ali |            |                                             |                |
 +-------------------------+------------+---------------------------------------------+----------------+
 | Muhammad Aish Qayyim bin| 242UC244BX |   muhammad.aish.qayyim@student.mmu.edu.my   |  012-342 5662  |
 | Mohd Azmi               |            |                                             |                |
 +-------------------------+------------+---------------------------------------------+----------------+
+|Muhammad Aref bin Hasni  | 242UC244Q1 |    muhammad.aref.mohd@student.mmu.edu.my    |  010-650 9597  |
++-------------------------+------------+---------------------------------------------+----------------+
+|
 */
 
 #include <iostream>
@@ -33,6 +36,7 @@ void PrintMap();
 void DefineRobot(smatch matches);
 void RandomAction(GenericRobot* robot);
 void Simulation();
+void AddRandomBot(string name);
 
 void MoveRobot(GenericRobot* robot);
 void LookRobot(GenericRobot* robot);
@@ -41,6 +45,14 @@ void ShootRobot(GenericRobot* robot);
 string emptySpace = ".";
 streambuf* originalCoutBuf = cout.rdbuf();
 int mapYSizeDigits;
+int randomRobotSpawnStep[3];
+
+void CalculateRandomSpawnSteps()
+{
+    randomRobotSpawnStep[0] = GetRandomNumber(2, simulationManager.simulationSteps / 4);
+    randomRobotSpawnStep[1] = GetRandomNumber(simulationManager.simulationSteps / 4, simulationManager.simulationSteps / 3);
+    randomRobotSpawnStep[2] = GetRandomNumber(simulationManager.simulationSteps / 3, simulationManager.simulationSteps / 2);
+}
 
 
 int main()
@@ -48,9 +60,12 @@ int main()
     string filename = "input.txt";
     string outputFilename = "output.txt";
     ofstream outputFile(outputFilename);
+    
     cout.rdbuf(outputFile.rdbuf());
     ReadFromFile(filename);
     mapYSizeDigits = log10(simulationManager.mapSize.y) + 1;
+    
+    CalculateRandomSpawnSteps();
 
     //* initial print
     for (const auto& robot : simulationManager.robots)
@@ -58,6 +73,13 @@ int main()
         cout << "Robot: " << robot->name << ", Type: " << robot->getType() 
              << ", Position: (" << robot->getPosition().x << ", " << robot->getPosition().y << ")" << endl;
     }
+
+    cout << "Random robot will spawn at steps: ";
+    for (int i = 0; i < 3; i++)
+    {
+        cout << randomRobotSpawnStep[i] << " ";
+    }
+    cout << endl;
 
     //* simulation
     Simulation();
@@ -220,8 +242,15 @@ void DefineRobot(smatch matches)
 #pragma region Simulation
 void Simulation()
 {
+    int randomSpawnStepCount = 0;
     for (int i = 0; i < simulationManager.simulationSteps; i++)
     {
+        if (i == randomRobotSpawnStep[randomSpawnStepCount])
+        {
+            //* add a random robot
+            AddRandomBot("RandomBot" + to_string(randomSpawnStepCount + 1));
+            randomSpawnStepCount++;
+        }
         cout << "\n!-- STEP " << i + 1 << " --!" << endl;
 
         if (simulationManager.robots.size() == 1)
@@ -374,3 +403,36 @@ void RandomAction(GenericRobot* robot)
     cout << endl;
 }
 #pragma endregion
+
+#pragma region add random bot
+void AddRandomBot(string name)
+{
+    string robotName = name;
+    Position robotPosition = GetRandomPosition(simulationManager.mapSize);
+    
+    //* check if the position is valid
+    while (!IsPositionValidAndUnoccupied(robotPosition))
+    {
+        robotPosition = GetRandomPosition(simulationManager.mapSize);
+    }
+
+    GenericRobot* robot;
+
+    //* randomly choose robot type
+    int randomType = GetRandomNumber(0, 2);
+    switch (randomType)
+    {
+        case 0:
+            robot = new MovingRobot(robotName, robotPosition);
+            break;
+        case 1:
+            robot = new ShootingRobot(robotName, robotPosition);
+            break;
+        case 2:
+            robot = new LookingRobot(robotName, robotPosition);
+            break;
+    }
+    cout << "Adding random robot: " << robotName << " at position " << robotPosition << endl;
+
+    simulationManager.robots.push_back(unique_ptr<GenericRobot>(robot));
+}
